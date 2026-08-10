@@ -1,0 +1,85 @@
+services:
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - api-case
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    volumes:
+      - ./:/var/www/html
+    environment:
+      - PHP_IDE_CONFIG=serverName=api-case
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - api-case
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/queue/Dockerfile
+    volumes:
+      - ./:/var/www/html
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - api-case
+
+  database:
+    image: postgres:17.5-alpine
+    environment:
+      - POSTGRES_DB=api_case
+      - POSTGRES_USER=api_case
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - api-case-pgdata:/var/lib/postgresql/data
+    ports:
+      - "7799:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U api_case -d api_case"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - api-case
+
+  redis:
+    image: redis:7.4-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - api-case-redisdata:/data
+    ports:
+      - "7780:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - api-case
+
+networks:
+  api-case:
+
+volumes:
+  api-case-pgdata: {}
+  api-case-redisdata: {}
