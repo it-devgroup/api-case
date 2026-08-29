@@ -77,6 +77,19 @@ services:
     networks:
       - api-case
 
+  swagger:
+    image: swaggerapi/swagger-ui
+    restart: always
+    ports:
+      - 7765:7765
+    volumes:
+      - ./api-docs:/api-docs
+    environment:
+      SWAGGER_JSON: /api-docs/api.json
+      PORT: 7765
+    networks:
+      - api-case
+
 networks:
   api-case:
 

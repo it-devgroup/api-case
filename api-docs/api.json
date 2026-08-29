@@ -1,0 +1,595 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API Case",
+    "description": "JSON:API-flavored authentication API for two independent guards: `user` (public self-registration, email verification required) and `admin` (pre-provisioned, deactivatable accounts). All responses are served with the `application/vnd.api+json` content type. Tokens are Laravel Sanctum personal access tokens, scoped to a single ability (`user` or `admin`); a token issued for one guard is rejected (403) on routes belonging to the other guard.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "API base path (see docker/nginx for the mapped host/port)"
+    }
+  ],
+  "tags": [
+    { "name": "User Auth", "description": "Public self-service registration, login, logout, and email verification for the `user` guard." },
+    { "name": "Admin Auth", "description": "Login and session inspection for the `admin` guard. Admin accounts are provisioned out-of-band (see `admin:create` console command) and are not self-registrable." }
+  ],
+  "components": {
+    "securitySchemes": {
+      "sanctumToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum personal access token",
+        "description": "Send the plain-text token returned by a login endpoint as `Authorization: Bearer <token>`. Each token is minted with a single ability (`user` or `admin`) matching the guard it was issued from."
+      }
+    },
+    "schemas": {
+      "UserAttributes": {
+        "type": "object",
+        "description": "Attributes exposed for a `users` JSON:API resource.",
+        "properties": {
+          "name": { "type": "string", "example": "Jane Doe", "description": "The user's display name." },
+          "email": { "type": "string", "format": "email", "example": "jane@example.com", "description": "The user's unique email address, also used as the login identifier." },
+          "email_verified_at": { "type": "string", "format": "date-time", "nullable": true, "example": "2026-08-29T10:15:00.000000Z", "description": "UTC timestamp of when the address was verified, or `null` if not yet verified. Login is rejected while this is `null`." },
+          "created_at": { "type": "string", "format": "date-time", "example": "2026-08-01T09:00:00.000000Z", "description": "UTC timestamp of account creation." },
+          "updated_at": { "type": "string", "format": "date-time", "example": "2026-08-01T09:00:00.000000Z", "description": "UTC timestamp of the last update to the account." }
+        }
+      },
+      "UserResourceObject": {
+        "type": "object",
+        "description": "A single JSON:API resource object of type `users`.",
+        "properties": {
+          "id": { "type": "string", "example": "1", "description": "The user's primary key, stringified per the JSON:API spec." },
+          "type": { "type": "string", "enum": ["users"], "example": "users", "description": "Always `users` for this resource." },
+          "attributes": { "$ref": "#/components/schemas/UserAttributes" }
+        }
+      },
+      "AdminAttributes": {
+        "type": "object",
+        "description": "Attributes exposed for an `admins` JSON:API resource.",
+        "properties": {
+          "name": { "type": "string", "example": "Site Admin", "description": "The admin's display name." },
+          "email": { "type": "string", "format": "email", "example": "admin@example.com", "description": "The admin's unique email address, also used as the login identifier." },
+          "email_verified_at": { "type": "string", "format": "date-time", "nullable": true, "example": "2026-08-01T09:00:00.000000Z", "description": "UTC timestamp of address verification, or `null`. Unlike the `user` guard, admin login does not require this to be set." },
+          "is_active": { "type": "boolean", "example": true, "description": "Whether the admin account is enabled. Inactive accounts fail login with the same generic credentials error as a wrong password." },
+          "created_at": { "type": "string", "format": "date-time", "example": "2026-07-01T09:00:00.000000Z", "description": "UTC timestamp of account creation." },
+          "updated_at": { "type": "string", "format": "date-time", "example": "2026-07-01T09:00:00.000000Z", "description": "UTC timestamp of the last update to the account." }
+        }
+      },
+      "AdminResourceObject": {
+        "type": "object",
+        "description": "A single JSON:API resource object of type `admins`.",
+        "properties": {
+          "id": { "type": "string", "example": "1", "description": "The admin's primary key, stringified per the JSON:API spec." },
+          "type": { "type": "string", "enum": ["admins"], "example": "admins", "description": "Always `admins` for this resource." },
+          "attributes": { "$ref": "#/components/schemas/AdminAttributes" }
+        }
+      },
+      "UserDocument": {
+        "type": "object",
+        "description": "A JSON:API document wrapping a single `users` resource.",
+        "properties": {
+          "data": { "$ref": "#/components/schemas/UserResourceObject" }
+        }
+      },
+      "UserDocumentWithToken": {
+        "type": "object",
+        "description": "A JSON:API document wrapping a single `users` resource plus a top-level `meta` object carrying a human-readable message and the freshly issued bearer token.",
+        "properties": {
+          "data": { "$ref": "#/components/schemas/UserResourceObject" },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string", "example": "Logged in successfully.", "description": "Human-readable status message." },
+              "token": { "type": "string", "example": "1|LZs9...plainTextTokenValue", "description": "Plain-text Sanctum token. Shown only once, on issuance; store it client-side and send it as `Authorization: Bearer <token>` on subsequent requests." }
+            }
+          }
+        }
+      },
+      "UserDocumentWithRegistrationMessage": {
+        "type": "object",
+        "description": "A JSON:API document wrapping the newly created `users` resource plus a top-level `meta.message`. No token is issued at registration time; the user must verify their email and then log in.",
+        "properties": {
+          "data": { "$ref": "#/components/schemas/UserResourceObject" },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string", "example": "Registered successfully. Please check your email to verify your account." }
+            }
+          }
+        }
+      },
+      "AdminDocument": {
+        "type": "object",
+        "description": "A JSON:API document wrapping a single `admins` resource.",
+        "properties": {
+          "data": { "$ref": "#/components/schemas/AdminResourceObject" }
+        }
+      },
+      "AdminDocumentWithToken": {
+        "type": "object",
+        "description": "A JSON:API document wrapping a single `admins` resource plus a top-level `meta` object carrying a human-readable message and the freshly issued bearer token.",
+        "properties": {
+          "data": { "$ref": "#/components/schemas/AdminResourceObject" },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string", "example": "Logged in successfully.", "description": "Human-readable status message." },
+              "token": { "type": "string", "example": "2|Xq7v...plainTextTokenValue", "description": "Plain-text Sanctum token, scoped to the `admin` ability. Shown only once, on issuance." }
+            }
+          }
+        }
+      },
+      "MetaMessageDocument": {
+        "type": "object",
+        "description": "A JSON:API document carrying only a top-level `meta.message`, no `data` member. Used by actions that do not return a resource (logout, email verification, resend notification).",
+        "properties": {
+          "meta": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string", "example": "Logged out successfully." }
+            }
+          }
+        }
+      },
+      "JsonApiErrorObject": {
+        "type": "object",
+        "description": "A single JSON:API error object.",
+        "properties": {
+          "status": { "type": "string", "example": "422", "description": "The HTTP status code applicable to this problem, as a string." },
+          "title": { "type": "string", "example": "Unprocessable Entity", "description": "A short, human-readable summary of the problem, derived from the HTTP status text." },
+          "code": { "type": "string", "example": "email_not_verified", "description": "An application-specific error code, present only where the API needs to disambiguate a status/title pair (currently only on the login `email_not_verified` case)." },
+          "detail": { "type": "string", "example": "These credentials do not match our records.", "description": "A human-readable explanation specific to this occurrence of the problem." },
+          "source": {
+            "type": "object",
+            "description": "Present on validation errors; identifies the offending request field.",
+            "properties": {
+              "pointer": { "type": "string", "example": "/data/attributes/email", "description": "A JSON Pointer to the request field that failed validation." }
+            }
+          }
+        }
+      },
+      "JsonApiErrorDocument": {
+        "type": "object",
+        "description": "A JSON:API document carrying a top-level `errors` array. Every non-2xx response from this API uses this shape.",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/JsonApiErrorObject" }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthenticated": {
+        "description": "No valid bearer token was supplied (missing, malformed, expired, or revoked token).",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+            "example": { "errors": [{ "status": "401", "title": "Unauthorized", "detail": "Authentication required." }] }
+          }
+        }
+      },
+      "WrongGuard": {
+        "description": "The bearer token is valid but was not issued for the guard this route belongs to (e.g. a `user` token calling an `admin` route, or vice versa).",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+            "example": { "errors": [{ "status": "403", "title": "Forbidden" }] }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Rate limit exceeded for this endpoint. Retry after the interval given in the `Retry-After` response header.",
+        "headers": {
+          "Retry-After": { "schema": { "type": "integer" }, "description": "Seconds to wait before retrying." },
+          "X-RateLimit-Limit": { "schema": { "type": "integer" }, "description": "Requests allowed per window." },
+          "X-RateLimit-Remaining": { "schema": { "type": "integer" }, "description": "Requests remaining in the current window." }
+        },
+        "content": {
+          "application/vnd.api+json": {
+            "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+            "example": { "errors": [{ "status": "429", "title": "Too Many Requests" }] }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "An unexpected server error occurred.",
+        "content": {
+          "application/vnd.api+json": {
+            "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+            "example": { "errors": [{ "status": "500", "title": "Server Error", "detail": "An unexpected error occurred." }] }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/register": {
+      "post": {
+        "tags": ["User Auth"],
+        "summary": "Register a new user account",
+        "description": "Creates a `user` account and dispatches a signed email-verification link. No bearer token is issued at this step: the account cannot log in until the address is verified via `GET /email/verify/{id}/{hash}`.",
+        "operationId": "registerUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password", "password_confirmation"],
+                "properties": {
+                  "name": { "type": "string", "maxLength": 255, "example": "Jane Doe", "description": "Required. The display name for the new account. Max 255 characters." },
+                  "email": { "type": "string", "format": "email", "maxLength": 255, "example": "jane@example.com", "description": "Required. Must be a syntactically valid email, at most 255 characters, and unique among existing users." },
+                  "password": { "type": "string", "format": "password", "example": "password123", "description": "Required. Must satisfy the application's default password policy (see `Illuminate\\Validation\\Rules\\Password::defaults()`) and match `password_confirmation`." },
+                  "password_confirmation": { "type": "string", "format": "password", "example": "password123", "description": "Required. Must exactly match `password`." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Account created; verification email dispatched.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/UserDocumentWithRegistrationMessage" },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "users",
+                    "attributes": {
+                      "name": "Jane Doe",
+                      "email": "jane@example.com",
+                      "email_verified_at": null,
+                      "created_at": "2026-08-29T10:00:00.000000Z",
+                      "updated_at": "2026-08-29T10:00:00.000000Z"
+                    }
+                  },
+                  "meta": { "message": "Registered successfully. Please check your email to verify your account." }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed: a required field is missing, malformed, the email is already taken, or the passwords do not match.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "example": {
+                  "errors": [
+                    { "status": "422", "title": "Unprocessable Entity", "detail": "The name field is required.", "source": { "pointer": "/data/attributes/name" } },
+                    { "status": "422", "title": "Unprocessable Entity", "detail": "The email field is required.", "source": { "pointer": "/data/attributes/email" } },
+                    { "status": "422", "title": "Unprocessable Entity", "detail": "The password field is required.", "source": { "pointer": "/data/attributes/password" } }
+                  ]
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": ["User Auth"],
+        "summary": "Log in as a user",
+        "description": "Authenticates a `user` account by email and password and, if the address is verified, issues a Sanctum token scoped to the `user` ability. Rate-limited to 6 requests per minute per client IP; exceeding it returns 429.",
+        "operationId": "loginUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "jane@example.com", "description": "Required. The account's registered email address." },
+                  "password": { "type": "string", "format": "password", "example": "password123", "description": "Required. The account's plain-text password." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials valid, email verified: token issued.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/UserDocumentWithToken" },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "users",
+                    "attributes": {
+                      "name": "Jane Doe",
+                      "email": "jane@example.com",
+                      "email_verified_at": "2026-08-29T10:05:00.000000Z",
+                      "created_at": "2026-08-29T10:00:00.000000Z",
+                      "updated_at": "2026-08-29T10:05:00.000000Z"
+                    }
+                  },
+                  "meta": { "message": "Logged in successfully.", "token": "1|LZs9examplePlainTextToken" }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials are valid but the account's email address has not been verified yet.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "example": { "errors": [{ "status": "403", "title": "Forbidden", "detail": "Your email address is not verified.", "code": "email_not_verified" }] }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed, or the email/password combination does not match any record. The same generic message is used for both a nonexistent email and a wrong password, to avoid leaking which one was incorrect.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "example": { "errors": [{ "status": "422", "title": "Unprocessable Entity", "detail": "These credentials do not match our records.", "source": { "pointer": "/data/attributes/email" } }] }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "tags": ["User Auth"],
+        "summary": "Log out and revoke the current token",
+        "description": "Deletes the Sanctum access token used to authenticate this request, immediately invalidating it. Requires a valid `user` bearer token.",
+        "operationId": "logoutUser",
+        "security": [{ "sanctumToken": [] }],
+        "responses": {
+          "200": {
+            "description": "Token revoked.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/MetaMessageDocument" },
+                "example": { "meta": { "message": "Logged out successfully." } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/email/verify/{id}/{hash}": {
+      "get": {
+        "tags": ["User Auth"],
+        "summary": "Verify a user's email address",
+        "description": "Consumes the signed link sent by the registration (or resend) email. The route itself is protected by Laravel's `signed` middleware, which rejects any request whose URL signature is missing, invalid, or expired (this shows up as a generic 403 before the controller ever runs); the controller then independently re-checks that `hash` equals `sha1(email)` for the given user as defense in depth. Verifying an already-verified address is idempotent and still returns 200.",
+        "operationId": "verifyUserEmail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "example": 1 },
+            "description": "The numeric primary key of the user to verify."
+          },
+          {
+            "name": "hash",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "5e0a6c3f2d1b4a...e9" },
+            "description": "SHA-1 hash of the user's email address, as embedded in the verification link."
+          },
+          {
+            "name": "expires",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer", "example": 1756468800 },
+            "description": "Unix timestamp after which the signed URL is no longer valid. Part of Laravel's URL signing, validated by the `signed` route middleware."
+          },
+          {
+            "name": "signature",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "example": "a1b2c3d4e5f6..." },
+            "description": "HMAC signature over the full URL and query string, validated by the `signed` route middleware."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Email verified (or was already verified; response is idempotent).",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/MetaMessageDocument" },
+                "examples": {
+                  "verified": { "value": { "meta": { "message": "Email address verified successfully." } } },
+                  "alreadyVerified": { "value": { "meta": { "message": "Email address already verified." } } }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The URL signature is missing, invalid, or expired, or the `hash` path segment does not match `sha1(email)` for the given user.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "examples": {
+                  "invalidLink": { "value": { "errors": [{ "status": "403", "title": "Forbidden", "detail": "Invalid verification link." }] } },
+                  "invalidSignature": { "value": { "errors": [{ "status": "403", "title": "Forbidden" }] } }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No user exists with the given `id`.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/email/verification-notification": {
+      "post": {
+        "tags": ["User Auth"],
+        "summary": "Resend the email verification link",
+        "description": "Re-sends the signed verification link to the authenticated user's email address; a no-op returning 200 if the address is already verified. Requires a valid `user` bearer token. Rate-limited to 6 requests per minute per authenticated user (falling back to IP if unauthenticated, though authentication is required to reach the handler at all).",
+        "operationId": "resendUserVerification",
+        "security": [{ "sanctumToken": [] }],
+        "responses": {
+          "200": {
+            "description": "Verification email sent, or the address was already verified (idempotent no-op).",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/MetaMessageDocument" },
+                "examples": {
+                  "sent": { "value": { "meta": { "message": "Verification link sent." } } },
+                  "alreadyVerified": { "value": { "meta": { "message": "Email address already verified." } } }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": ["User Auth"],
+        "summary": "Get the authenticated user's profile",
+        "description": "Returns the `users` resource for the account owning the bearer token. Requires a `user`-scoped token; an `admin` token is rejected with 403.",
+        "operationId": "getCurrentUser",
+        "security": [{ "sanctumToken": [] }],
+        "responses": {
+          "200": {
+            "description": "The authenticated user's profile.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/UserDocument" },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "users",
+                    "attributes": {
+                      "name": "Jane Doe",
+                      "email": "jane@example.com",
+                      "email_verified_at": "2026-08-29T10:05:00.000000Z",
+                      "created_at": "2026-08-29T10:00:00.000000Z",
+                      "updated_at": "2026-08-29T10:05:00.000000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/admin/login": {
+      "post": {
+        "tags": ["Admin Auth"],
+        "summary": "Log in as an admin",
+        "description": "Authenticates an `admin` account by email and password. Unlike the user guard, email verification is not required, but the account must have `is_active = true`; inactive or soft-deleted admins fail with the same generic credentials error as a wrong password, to avoid revealing account state. Issues a Sanctum token scoped to the `admin` ability. Rate-limited to 6 requests per minute per client IP.",
+        "operationId": "loginAdmin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "admin@example.com", "description": "Required. The admin account's registered email address." },
+                  "password": { "type": "string", "format": "password", "example": "password", "description": "Required. The admin account's plain-text password." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials valid and account active: token issued.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/AdminDocumentWithToken" },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "admins",
+                    "attributes": {
+                      "name": "Site Admin",
+                      "email": "admin@example.com",
+                      "email_verified_at": "2026-07-01T09:00:00.000000Z",
+                      "is_active": true,
+                      "created_at": "2026-07-01T09:00:00.000000Z",
+                      "updated_at": "2026-07-01T09:00:00.000000Z"
+                    }
+                  },
+                  "meta": { "message": "Logged in successfully.", "token": "2|Xq7vExamplePlainTextToken" }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed, or the email/password combination does not match an active record (covers wrong password, unknown email, inactive account, and soft-deleted account alike).",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "example": { "errors": [{ "status": "422", "title": "Unprocessable Entity", "detail": "These credentials do not match our records.", "source": { "pointer": "/data/attributes/email" } }] }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/TooManyRequests" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/admin/me": {
+      "get": {
+        "tags": ["Admin Auth"],
+        "summary": "Get the authenticated admin's profile",
+        "description": "Returns the `admins` resource for the account owning the bearer token. Requires an `admin`-scoped token; a `user` token is rejected with 403.",
+        "operationId": "getCurrentAdmin",
+        "security": [{ "sanctumToken": [] }],
+        "responses": {
+          "200": {
+            "description": "The authenticated admin's profile.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/AdminDocument" },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "admins",
+                    "attributes": {
+                      "name": "Site Admin",
+                      "email": "admin@example.com",
+                      "email_verified_at": "2026-07-01T09:00:00.000000Z",
+                      "is_active": true,
+                      "created_at": "2026-07-01T09:00:00.000000Z",
+                      "updated_at": "2026-07-01T09:00:00.000000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    }
+  }
+}
