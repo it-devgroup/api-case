@@ -14,7 +14,8 @@
   "tags": [
     { "name": "User Auth", "description": "Public self-service registration, login, logout, and email verification for the `user` guard." },
     { "name": "Admin Auth", "description": "Login and session inspection for the `admin` guard. Admin accounts are provisioned out-of-band (see `admin:create` console command) and are not self-registrable." },
-    { "name": "Admin Product Categories", "description": "CRUD for `product-categories`, restricted to the `admin` guard." }
+    { "name": "Admin Product Categories", "description": "CRUD for `product-categories`, restricted to the `admin` guard." },
+    { "name": "Admin Products", "description": "CRUD for `products`, restricted to the `admin` guard." }
   ],
   "components": {
     "securitySchemes": {
@@ -174,6 +175,70 @@
         "description": "A JSON:API document wrapping a paginated collection of `product-categories` resources.",
         "properties": {
           "data": { "type": "array", "items": { "$ref": "#/components/schemas/ProductCategoryResourceObject" } }
+        }
+      },
+      "ProductAttributes": {
+        "type": "object",
+        "description": "Attributes exposed for a `products` JSON:API resource.",
+        "properties": {
+          "sku": { "type": "string", "maxLength": 255, "example": "SKU-0001", "description": "Stock keeping unit identifier. Not translatable." },
+          "slug": { "type": "string", "maxLength": 255, "example": "phone-x", "description": "URL-safe identifier for the product." },
+          "title": {
+            "type": "object",
+            "description": "Translatable product title, keyed by locale code. Reading returns every locale currently stored; writing a subset of locales only touches those locales, leaving others untouched.",
+            "additionalProperties": { "type": "string" },
+            "example": { "en": "Phone X", "no": "Telefon X" }
+          },
+          "description": {
+            "type": "object",
+            "description": "Optional translatable long-form description, keyed by locale code. Reading returns every locale currently stored (an empty object if none were set); writing a subset of locales only touches those locales, leaving others untouched.",
+            "additionalProperties": { "type": "string" },
+            "example": { "en": "A great phone." }
+          },
+          "is_active": { "type": "boolean", "example": true, "description": "Whether the product is active. Defaults to `true`." },
+          "category_id": { "type": "integer", "nullable": true, "example": 1, "description": "The id of the owning `product-categories` resource, or `null` if uncategorized." },
+          "price": { "type": "number", "format": "float", "example": 599.99, "description": "Unit price." },
+          "stock_quantity": { "type": "integer", "minimum": 0, "example": 25, "description": "Units currently in stock. Never negative." },
+          "image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x.jpg", "description": "URL or path to the product image. Not translatable." },
+          "meta_title": {
+            "type": "object",
+            "description": "Optional translatable `<title>` tag content for SEO, keyed by locale code. Reading returns every locale currently stored (an empty object if none were set); writing a subset of locales only touches those locales, leaving others untouched.",
+            "additionalProperties": { "type": "string" },
+            "example": { "en": "Phone X | Example" }
+          },
+          "meta_description": {
+            "type": "object",
+            "description": "Optional translatable meta description for SEO, keyed by locale code. Reading returns every locale currently stored (an empty object if none were set); writing a subset of locales only touches those locales, leaving others untouched.",
+            "additionalProperties": { "type": "string" },
+            "example": { "en": "Buy Phone X." }
+          },
+          "meta_keywords": { "type": "string", "nullable": true, "example": "phone, smartphone", "description": "Optional meta keywords for SEO, comma-separated. Not translatable." },
+          "og_image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x-og.jpg", "description": "URL or path to the Open Graph share image. Not translatable." },
+          "created_at": { "type": "string", "format": "date-time", "example": "2026-08-31T09:00:00.000000Z", "description": "UTC timestamp of product creation." },
+          "updated_at": { "type": "string", "format": "date-time", "example": "2026-08-31T09:00:00.000000Z", "description": "UTC timestamp of the last update to the product." }
+        }
+      },
+      "ProductResourceObject": {
+        "type": "object",
+        "description": "A single JSON:API resource object of type `products`.",
+        "properties": {
+          "id": { "type": "string", "example": "1", "description": "The product's primary key, stringified per the JSON:API spec." },
+          "type": { "type": "string", "enum": ["products"], "example": "products", "description": "Always `products` for this resource." },
+          "attributes": { "$ref": "#/components/schemas/ProductAttributes" }
+        }
+      },
+      "ProductDocument": {
+        "type": "object",
+        "description": "A JSON:API document wrapping a single `products` resource.",
+        "properties": {
+          "data": { "$ref": "#/components/schemas/ProductResourceObject" }
+        }
+      },
+      "ProductCollectionDocument": {
+        "type": "object",
+        "description": "A JSON:API document wrapping a paginated collection of `products` resources.",
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ProductResourceObject" } }
         }
       },
       "MetaMessageDocument": {
@@ -894,6 +959,336 @@
           "403": { "$ref": "#/components/responses/WrongGuard" },
           "404": {
             "description": "No product category exists with the given id.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/admin/products": {
+      "get": {
+        "tags": ["Admin Products"],
+        "summary": "List products",
+        "description": "Returns a paginated collection of `products` resources. Requires an `admin`-scoped token.",
+        "operationId": "listProducts",
+        "security": [{ "sanctumToken": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "example": 1 }, "description": "Page number of results to return." }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of products.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/ProductCollectionDocument" },
+                "example": {
+                  "data": [
+                    {
+                      "id": "1",
+                      "type": "products",
+                      "attributes": {
+                        "sku": "SKU-0001",
+                        "slug": "phone-x",
+                        "title": { "en": "Phone X", "no": "Telefon X" },
+                        "description": { "en": "A great phone." },
+                        "is_active": true,
+                        "category_id": 1,
+                        "price": 599.99,
+                        "stock_quantity": 25,
+                        "image": "https://example.com/phone-x.jpg",
+                        "meta_title": { "en": "Phone X | Example" },
+                        "meta_description": { "en": "Buy Phone X." },
+                        "meta_keywords": "phone, smartphone",
+                        "og_image": "https://example.com/phone-x-og.jpg",
+                        "created_at": "2026-08-31T09:00:00.000000Z",
+                        "updated_at": "2026-08-31T09:00:00.000000Z"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      },
+      "post": {
+        "tags": ["Admin Products"],
+        "summary": "Create a product",
+        "description": "Creates a `products` resource. Requires an `admin`-scoped token.",
+        "operationId": "createProduct",
+        "security": [{ "sanctumToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["sku", "slug", "title", "price", "stock_quantity"],
+                "properties": {
+                  "sku": { "type": "string", "maxLength": 255, "example": "SKU-0001", "description": "Required. At most 255 characters." },
+                  "slug": { "type": "string", "maxLength": 255, "example": "phone-x", "description": "Required. Must be unique among existing products, at most 255 characters." },
+                  "title": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" },
+                    "example": { "en": "Phone X", "no": "Telefon X" },
+                    "description": "Required. A non-empty object mapping locale code to title string."
+                  },
+                  "description": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": { "type": "string" },
+                    "example": { "en": "A great phone." },
+                    "description": "Optional. An object mapping locale code to description string. Omit to store no translations."
+                  },
+                  "is_active": { "type": "boolean", "nullable": true, "example": true, "description": "Optional. Defaults to `true` when omitted." },
+                  "category_id": { "type": "integer", "nullable": true, "example": 1, "description": "Optional. Must reference an existing `product-categories` resource." },
+                  "price": { "type": "number", "format": "float", "minimum": 0, "example": 599.99, "description": "Required. Must not be negative." },
+                  "stock_quantity": { "type": "integer", "minimum": 0, "example": 25, "description": "Required. Must not be negative." },
+                  "image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x.jpg", "description": "Optional. URL or path to the product image." },
+                  "meta_title": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": { "type": "string" },
+                    "example": { "en": "Phone X | Example" },
+                    "description": "Optional. An object mapping locale code to meta title string. Omit to store no translations."
+                  },
+                  "meta_description": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": { "type": "string" },
+                    "example": { "en": "Buy Phone X." },
+                    "description": "Optional. An object mapping locale code to meta description string. Omit to store no translations."
+                  },
+                  "meta_keywords": { "type": "string", "nullable": true, "example": "phone, smartphone", "description": "Optional. Comma-separated meta keywords." },
+                  "og_image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x-og.jpg", "description": "Optional. URL or path to the Open Graph share image." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/ProductDocument" },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "products",
+                    "attributes": {
+                      "sku": "SKU-0001",
+                      "slug": "phone-x",
+                      "title": { "en": "Phone X", "no": "Telefon X" },
+                      "description": { "en": "A great phone." },
+                      "is_active": true,
+                      "category_id": 1,
+                      "price": 599.99,
+                      "stock_quantity": 25,
+                      "image": "https://example.com/phone-x.jpg",
+                      "meta_title": { "en": "Phone X | Example" },
+                      "meta_description": { "en": "Buy Phone X." },
+                      "meta_keywords": "phone, smartphone",
+                      "og_image": "https://example.com/phone-x-og.jpg",
+                      "created_at": "2026-08-31T09:00:00.000000Z",
+                      "updated_at": "2026-08-31T09:00:00.000000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "422": {
+            "description": "Validation failed: a required field is missing or malformed, the slug is already taken, or `category_id` does not reference an existing category.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "example": {
+                  "errors": [
+                    { "status": "422", "title": "Unprocessable Entity", "detail": "The slug has already been taken.", "source": { "pointer": "/data/attributes/slug" } }
+                  ]
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/admin/products/{product}": {
+      "get": {
+        "tags": ["Admin Products"],
+        "summary": "Get a product",
+        "description": "Returns a single `products` resource. Requires an `admin`-scoped token.",
+        "operationId": "getProduct",
+        "security": [{ "sanctumToken": [] }],
+        "parameters": [
+          { "name": "product", "in": "path", "required": true, "schema": { "type": "integer", "example": 1 }, "description": "The product's numeric primary key." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested product.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/ProductDocument" },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "products",
+                    "attributes": {
+                      "sku": "SKU-0001",
+                      "slug": "phone-x",
+                      "title": { "en": "Phone X", "no": "Telefon X" },
+                      "description": { "en": "A great phone." },
+                      "is_active": true,
+                      "category_id": 1,
+                      "price": 599.99,
+                      "stock_quantity": 25,
+                      "image": "https://example.com/phone-x.jpg",
+                      "meta_title": { "en": "Phone X | Example" },
+                      "meta_description": { "en": "Buy Phone X." },
+                      "meta_keywords": "phone, smartphone",
+                      "og_image": "https://example.com/phone-x-og.jpg",
+                      "created_at": "2026-08-31T09:00:00.000000Z",
+                      "updated_at": "2026-08-31T09:00:00.000000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "404": {
+            "description": "No product exists with the given id.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      },
+      "patch": {
+        "tags": ["Admin Products"],
+        "summary": "Update a product",
+        "description": "Partially updates a `products` resource; all fields are optional. Setting a translatable field only replaces the locales present in the payload, leaving other stored locales untouched. Requires an `admin`-scoped token.",
+        "operationId": "updateProduct",
+        "security": [{ "sanctumToken": [] }],
+        "parameters": [
+          { "name": "product", "in": "path", "required": true, "schema": { "type": "integer", "example": 1 }, "description": "The product's numeric primary key." }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sku": { "type": "string", "maxLength": 255, "example": "SKU-0002" },
+                  "slug": { "type": "string", "maxLength": 255, "example": "phone-x-v2", "description": "Must be unique among other products, at most 255 characters." },
+                  "title": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" },
+                    "example": { "no": "Telefon X" },
+                    "description": "A non-empty object mapping locale code to title string. Only the given locales are updated."
+                  },
+                  "description": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" },
+                    "example": { "en": "An even better phone." },
+                    "description": "A non-empty object mapping locale code to description string. Only the given locales are updated."
+                  },
+                  "is_active": { "type": "boolean", "example": false },
+                  "category_id": { "type": "integer", "nullable": true, "example": 2, "description": "Must reference an existing `product-categories` resource." },
+                  "price": { "type": "number", "format": "float", "minimum": 0, "example": 549.99 },
+                  "stock_quantity": { "type": "integer", "minimum": 0, "example": 10 },
+                  "image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x-v2.jpg" },
+                  "meta_title": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" },
+                    "example": { "en": "Phone X v2 | Example" },
+                    "description": "A non-empty object mapping locale code to meta title string. Only the given locales are updated."
+                  },
+                  "meta_description": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" },
+                    "example": { "en": "Buy the new Phone X." },
+                    "description": "A non-empty object mapping locale code to meta description string. Only the given locales are updated."
+                  },
+                  "meta_keywords": { "type": "string", "nullable": true, "example": "phone, smartphone, new" },
+                  "og_image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x-v2-og.jpg" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/ProductDocument" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "404": {
+            "description": "No product exists with the given id.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed: the slug is already taken by another product, or `category_id` does not reference an existing category.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      },
+      "delete": {
+        "tags": ["Admin Products"],
+        "summary": "Delete a product",
+        "description": "Permanently deletes a `products` resource. Requires an `admin`-scoped token.",
+        "operationId": "deleteProduct",
+        "security": [{ "sanctumToken": [] }],
+        "parameters": [
+          { "name": "product", "in": "path", "required": true, "schema": { "type": "integer", "example": 1 }, "description": "The product's numeric primary key." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product deleted.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": { "$ref": "#/components/schemas/MetaMessageDocument" },
+                "example": { "meta": { "message": "Product deleted successfully." } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthenticated" },
+          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "404": {
+            "description": "No product exists with the given id.",
             "content": {
               "application/vnd.api+json": {
                 "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
