@@ -1858,6 +1858,134 @@
         }
       }
     },
+    "/admin/product-categories/export": {
+      "get": {
+        "tags": [
+          "Admin Product Categories"
+        ],
+        "summary": "Export product categories",
+        "description": "Streams every `product-categories` resource as an `.xlsx` spreadsheet, one row per category. Translatable fields (`description`, `metaTitle`, `metaDescription`) are JSON-encoded strings (e.g. `{\"en\":\"Shop the latest phones.\"}`) so they round-trip through the import endpoint. Requires an `admin`-scoped token.",
+        "operationId": "exportProductCategories",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An `.xlsx` spreadsheet of all product categories.",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/product-categories/import": {
+      "post": {
+        "tags": [
+          "Admin Product Categories"
+        ],
+        "summary": "Import product categories",
+        "description": "Bulk creates/updates `product-categories` resources from an uploaded `.xlsx` or `.csv` spreadsheet using the same column layout as the export endpoint. Rows are matched to existing categories by `slug`: a matching slug updates that category, otherwise a new category is created. Invalid rows are skipped and reported back instead of failing the whole import; a row's `description`, `metaTitle` and `metaDescription` cells must be JSON-encoded objects mapping locale code to string (e.g. `{\"en\":\"Shop the latest phones.\"}`). Requires an `admin`-scoped token.",
+        "operationId": "importProductCategories",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Required. An `.xlsx` or `.csv` file, at most 10 MB."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import completed. Individual row failures are reported in `meta.errors` rather than failing the whole request.",
+            "content": {
+              "application/vnd.api+json": {
+                "example": {
+                  "meta": {
+                    "message": "Import completed.",
+                    "created": 2,
+                    "updated": 1,
+                    "failed": 1,
+                    "errors": [
+                      {
+                        "row": 5,
+                        "errors": [
+                          "The slug field is required."
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "422": {
+            "description": "Validation failed: no file was uploaded, or the file is not a `.xlsx`/`.csv` file, or exceeds 10 MB.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "422",
+                      "title": "Unprocessable Entity",
+                      "detail": "The file field is required.",
+                      "source": {
+                        "pointer": "/data/attributes/file"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/admin/product-categories/{product_category}": {
       "get": {
         "tags": [
@@ -2438,6 +2566,134 @@
                       "detail": "The slug has already been taken.",
                       "source": {
                         "pointer": "/data/attributes/slug"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/products/export": {
+      "get": {
+        "tags": [
+          "Admin Products"
+        ],
+        "summary": "Export products",
+        "description": "Streams every `products` resource as an `.xlsx` spreadsheet, one row per product. Translatable fields (`title`, `description`, `metaTitle`, `metaDescription`) are JSON-encoded strings (e.g. `{\"en\":\"Phone X\"}`) so they round-trip through the import endpoint. Requires an `admin`-scoped token.",
+        "operationId": "exportProducts",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An `.xlsx` spreadsheet of all products.",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/products/import": {
+      "post": {
+        "tags": [
+          "Admin Products"
+        ],
+        "summary": "Import products",
+        "description": "Bulk creates/updates `products` resources from an uploaded `.xlsx` or `.csv` spreadsheet using the same column layout as the export endpoint. Rows are matched to existing products by `slug`: a matching slug updates that product, otherwise a new product is created. Invalid rows are skipped and reported back instead of failing the whole import; a row's `title`, `description`, `metaTitle` and `metaDescription` cells must be JSON-encoded objects mapping locale code to string (e.g. `{\"en\":\"Phone X\"}`). Requires an `admin`-scoped token.",
+        "operationId": "importProducts",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Required. An `.xlsx` or `.csv` file, at most 10 MB."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import completed. Individual row failures are reported in `meta.errors` rather than failing the whole request.",
+            "content": {
+              "application/vnd.api+json": {
+                "example": {
+                  "meta": {
+                    "message": "Import completed.",
+                    "created": 3,
+                    "updated": 1,
+                    "failed": 1,
+                    "errors": [
+                      {
+                        "row": 6,
+                        "errors": [
+                          "The slug field is required."
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "422": {
+            "description": "Validation failed: no file was uploaded, or the file is not a `.xlsx`/`.csv` file, or exceeds 10 MB.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "422",
+                      "title": "Unprocessable Entity",
+                      "detail": "The file field is required.",
+                      "source": {
+                        "pointer": "/data/attributes/file"
                       }
                     }
                   ]
@@ -3668,6 +3924,62 @@
                       }
                     }
                   ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/orders/export": {
+      "get": {
+        "tags": [
+          "Admin Orders"
+        ],
+        "summary": "Export orders",
+        "description": "Streams orders as an `.xlsx` spreadsheet, one row per order (order line items and payments are not included). Accepts the same `status` and `userId` filters as the list endpoint. Requires an `admin`-scoped token.",
+        "operationId": "exportOrders",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/OrderStatus"
+            },
+            "description": "Filter to orders with this status."
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "Filter to orders belonging to this user."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An `.xlsx` spreadsheet of orders.",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }

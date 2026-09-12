@@ -5,6 +5,7 @@ A JSON:API-flavored e-commerce backend built with Laravel. It exposes a public s
 **Highlights**
 - Dual auth guards: public self-registration with required email verification (`user`), and pre-provisioned, deactivatable accounts (`admin`).
 - Product catalog with translatable fields, categories, and stock-aware order creation with row-level locking to prevent overselling.
+- Admin bulk import/export of products and product categories, and order export, via `.xlsx`/`.csv` spreadsheets ([rap2hpoutre/fast-excel](https://github.com/rap2hpoutre/fast-excel)).
 - Stripe Checkout integration with webhook handling (payment success, expiry, refunds) and a scheduled command to expire stale pending orders.
 - Full OpenAPI documentation served via Swagger UI.
 
