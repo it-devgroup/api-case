@@ -42,15 +42,15 @@ class ShowTest extends TestCase
         $response->assertJsonPath('data.attributes.slug', 'phone-x');
         $response->assertJsonPath('data.attributes.title.en', 'Phone X');
         $response->assertJsonPath('data.attributes.description.en', 'A great phone.');
-        $response->assertJsonPath('data.attributes.is_active', true);
-        $response->assertJsonPath('data.attributes.category_id', $category->id);
+        $response->assertJsonPath('data.attributes.isActive', true);
+        $response->assertJsonPath('data.attributes.categoryId', $category->id);
         $response->assertJsonPath('data.attributes.price', 599.99);
-        $response->assertJsonPath('data.attributes.stock_quantity', 25);
+        $response->assertJsonPath('data.attributes.stockQuantity', 25);
         $response->assertJsonPath('data.attributes.image', 'https://example.com/phone-x.jpg');
-        $response->assertJsonPath('data.attributes.meta_title.en', 'Phone X | Example');
-        $response->assertJsonPath('data.attributes.meta_description.en', 'Buy Phone X.');
-        $response->assertJsonPath('data.attributes.meta_keywords', 'phone, smartphone');
-        $response->assertJsonPath('data.attributes.og_image', 'https://example.com/phone-x-og.jpg');
+        $response->assertJsonPath('data.attributes.metaTitle.en', 'Phone X | Example');
+        $response->assertJsonPath('data.attributes.metaDescription.en', 'Buy Phone X.');
+        $response->assertJsonPath('data.attributes.metaKeywords', 'phone, smartphone');
+        $response->assertJsonPath('data.attributes.ogImage', 'https://example.com/phone-x-og.jpg');
     }
 
     public function test_returns_404_for_missing_product(): void

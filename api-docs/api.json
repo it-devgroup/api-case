@@ -12,10 +12,42 @@
     }
   ],
   "tags": [
-    { "name": "User Auth", "description": "Public self-service registration, login, logout, and email verification for the `user` guard." },
-    { "name": "Admin Auth", "description": "Login and session inspection for the `admin` guard. Admin accounts are provisioned out-of-band (see `admin:create` console command) and are not self-registrable." },
-    { "name": "Admin Product Categories", "description": "CRUD for `product-categories`, restricted to the `admin` guard." },
-    { "name": "Admin Products", "description": "CRUD for `products`, restricted to the `admin` guard." }
+    {
+      "name": "User Auth",
+      "description": "Public self-service registration, login, logout, and email verification for the `user` guard."
+    },
+    {
+      "name": "Admin Auth",
+      "description": "Login and session inspection for the `admin` guard. Admin accounts are provisioned out-of-band (see `admin:create` console command) and are not self-registrable."
+    },
+    {
+      "name": "Admin Product Categories",
+      "description": "CRUD for `product-categories`, restricted to the `admin` guard."
+    },
+    {
+      "name": "Admin Products",
+      "description": "CRUD for `products`, restricted to the `admin` guard."
+    },
+    {
+      "name": "Products",
+      "description": "Public browsing of the active `products` catalog. No authentication required."
+    },
+    {
+      "name": "Product Categories",
+      "description": "Public browsing of `product-categories`. No authentication required."
+    },
+    {
+      "name": "Orders",
+      "description": "Customer order creation, listing, and Stripe Checkout initiation, restricted to the `user` guard and scoped to the caller's own orders."
+    },
+    {
+      "name": "Stripe Webhooks",
+      "description": "Inbound Stripe webhook delivery. Authenticated by `Stripe-Signature`, not Sanctum."
+    },
+    {
+      "name": "Admin Orders",
+      "description": "Read and manual-override access to all orders, restricted to the `admin` guard."
+    }
   ],
   "components": {
     "securitySchemes": {
@@ -31,60 +63,152 @@
         "type": "object",
         "description": "Attributes exposed for a `users` JSON:API resource.",
         "properties": {
-          "name": { "type": "string", "example": "Jane Doe", "description": "The user's display name." },
-          "email": { "type": "string", "format": "email", "example": "jane@example.com", "description": "The user's unique email address, also used as the login identifier." },
-          "email_verified_at": { "type": "string", "format": "date-time", "nullable": true, "example": "2026-08-29T10:15:00.000000Z", "description": "UTC timestamp of when the address was verified, or `null` if not yet verified. Login is rejected while this is `null`." },
-          "created_at": { "type": "string", "format": "date-time", "example": "2026-08-01T09:00:00.000000Z", "description": "UTC timestamp of account creation." },
-          "updated_at": { "type": "string", "format": "date-time", "example": "2026-08-01T09:00:00.000000Z", "description": "UTC timestamp of the last update to the account." }
+          "name": {
+            "type": "string",
+            "example": "Jane Doe",
+            "description": "The user's display name."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "jane@example.com",
+            "description": "The user's unique email address, also used as the login identifier."
+          },
+          "emailVerifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-08-29T10:15:00.000000Z",
+            "description": "UTC timestamp of when the address was verified, or `null` if not yet verified. Login is rejected while this is `null`."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-01T09:00:00.000000Z",
+            "description": "UTC timestamp of account creation."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-01T09:00:00.000000Z",
+            "description": "UTC timestamp of the last update to the account."
+          }
         }
       },
       "UserResourceObject": {
         "type": "object",
         "description": "A single JSON:API resource object of type `users`.",
         "properties": {
-          "id": { "type": "string", "example": "1", "description": "The user's primary key, stringified per the JSON:API spec." },
-          "type": { "type": "string", "enum": ["users"], "example": "users", "description": "Always `users` for this resource." },
-          "attributes": { "$ref": "#/components/schemas/UserAttributes" }
+          "id": {
+            "type": "string",
+            "example": "1",
+            "description": "The user's primary key, stringified per the JSON:API spec."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "users"
+            ],
+            "example": "users",
+            "description": "Always `users` for this resource."
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/UserAttributes"
+          }
         }
       },
       "AdminAttributes": {
         "type": "object",
         "description": "Attributes exposed for an `admins` JSON:API resource.",
         "properties": {
-          "name": { "type": "string", "example": "Site Admin", "description": "The admin's display name." },
-          "email": { "type": "string", "format": "email", "example": "admin@example.com", "description": "The admin's unique email address, also used as the login identifier." },
-          "email_verified_at": { "type": "string", "format": "date-time", "nullable": true, "example": "2026-08-01T09:00:00.000000Z", "description": "UTC timestamp of address verification, or `null`. Unlike the `user` guard, admin login does not require this to be set." },
-          "is_active": { "type": "boolean", "example": true, "description": "Whether the admin account is enabled. Inactive accounts fail login with the same generic credentials error as a wrong password." },
-          "created_at": { "type": "string", "format": "date-time", "example": "2026-07-01T09:00:00.000000Z", "description": "UTC timestamp of account creation." },
-          "updated_at": { "type": "string", "format": "date-time", "example": "2026-07-01T09:00:00.000000Z", "description": "UTC timestamp of the last update to the account." }
+          "name": {
+            "type": "string",
+            "example": "Site Admin",
+            "description": "The admin's display name."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@example.com",
+            "description": "The admin's unique email address, also used as the login identifier."
+          },
+          "emailVerifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-08-01T09:00:00.000000Z",
+            "description": "UTC timestamp of address verification, or `null`. Unlike the `user` guard, admin login does not require this to be set."
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the admin account is enabled. Inactive accounts fail login with the same generic credentials error as a wrong password."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-01T09:00:00.000000Z",
+            "description": "UTC timestamp of account creation."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-01T09:00:00.000000Z",
+            "description": "UTC timestamp of the last update to the account."
+          }
         }
       },
       "AdminResourceObject": {
         "type": "object",
         "description": "A single JSON:API resource object of type `admins`.",
         "properties": {
-          "id": { "type": "string", "example": "1", "description": "The admin's primary key, stringified per the JSON:API spec." },
-          "type": { "type": "string", "enum": ["admins"], "example": "admins", "description": "Always `admins` for this resource." },
-          "attributes": { "$ref": "#/components/schemas/AdminAttributes" }
+          "id": {
+            "type": "string",
+            "example": "1",
+            "description": "The admin's primary key, stringified per the JSON:API spec."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "admins"
+            ],
+            "example": "admins",
+            "description": "Always `admins` for this resource."
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/AdminAttributes"
+          }
         }
       },
       "UserDocument": {
         "type": "object",
         "description": "A JSON:API document wrapping a single `users` resource.",
         "properties": {
-          "data": { "$ref": "#/components/schemas/UserResourceObject" }
+          "data": {
+            "$ref": "#/components/schemas/UserResourceObject"
+          }
         }
       },
       "UserDocumentWithToken": {
         "type": "object",
         "description": "A JSON:API document wrapping a single `users` resource plus a top-level `meta` object carrying a human-readable message and the freshly issued bearer token.",
         "properties": {
-          "data": { "$ref": "#/components/schemas/UserResourceObject" },
+          "data": {
+            "$ref": "#/components/schemas/UserResourceObject"
+          },
           "meta": {
             "type": "object",
             "properties": {
-              "message": { "type": "string", "example": "Logged in successfully.", "description": "Human-readable status message." },
-              "token": { "type": "string", "example": "1|LZs9...plainTextTokenValue", "description": "Plain-text Sanctum token. Shown only once, on issuance; store it client-side and send it as `Authorization: Bearer <token>` on subsequent requests." }
+              "message": {
+                "type": "string",
+                "example": "Logged in successfully.",
+                "description": "Human-readable status message."
+              },
+              "token": {
+                "type": "string",
+                "example": "1|LZs9...plainTextTokenValue",
+                "description": "Plain-text Sanctum token. Shown only once, on issuance; store it client-side and send it as `Authorization: Bearer <token>` on subsequent requests."
+              }
             }
           }
         }
@@ -93,11 +217,16 @@
         "type": "object",
         "description": "A JSON:API document wrapping the newly created `users` resource plus a top-level `meta.message`. No token is issued at registration time; the user must verify their email and then log in.",
         "properties": {
-          "data": { "$ref": "#/components/schemas/UserResourceObject" },
+          "data": {
+            "$ref": "#/components/schemas/UserResourceObject"
+          },
           "meta": {
             "type": "object",
             "properties": {
-              "message": { "type": "string", "example": "Registered successfully. Please check your email to verify your account." }
+              "message": {
+                "type": "string",
+                "example": "Registered successfully. Please check your email to verify your account."
+              }
             }
           }
         }
@@ -106,19 +235,31 @@
         "type": "object",
         "description": "A JSON:API document wrapping a single `admins` resource.",
         "properties": {
-          "data": { "$ref": "#/components/schemas/AdminResourceObject" }
+          "data": {
+            "$ref": "#/components/schemas/AdminResourceObject"
+          }
         }
       },
       "AdminDocumentWithToken": {
         "type": "object",
         "description": "A JSON:API document wrapping a single `admins` resource plus a top-level `meta` object carrying a human-readable message and the freshly issued bearer token.",
         "properties": {
-          "data": { "$ref": "#/components/schemas/AdminResourceObject" },
+          "data": {
+            "$ref": "#/components/schemas/AdminResourceObject"
+          },
           "meta": {
             "type": "object",
             "properties": {
-              "message": { "type": "string", "example": "Logged in successfully.", "description": "Human-readable status message." },
-              "token": { "type": "string", "example": "2|Xq7v...plainTextTokenValue", "description": "Plain-text Sanctum token, scoped to the `admin` ability. Shown only once, on issuance." }
+              "message": {
+                "type": "string",
+                "example": "Logged in successfully.",
+                "description": "Human-readable status message."
+              },
+              "token": {
+                "type": "string",
+                "example": "2|Xq7v...plainTextTokenValue",
+                "description": "Plain-text Sanctum token, scoped to the `admin` ability. Shown only once, on issuance."
+              }
             }
           }
         }
@@ -127,118 +268,281 @@
         "type": "object",
         "description": "Attributes exposed for a `product-categories` JSON:API resource.",
         "properties": {
-          "slug": { "type": "string", "maxLength": 255, "example": "phones", "description": "URL-safe unique identifier for the category." },
-          "title": { "type": "string", "maxLength": 255, "example": "Phones", "description": "Display title of the category. Not translatable." },
+          "slug": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "phones",
+            "description": "URL-safe unique identifier for the category."
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Phones",
+            "description": "Display title of the category. Not translatable."
+          },
           "description": {
             "type": "object",
             "description": "Optional translatable long-form description, keyed by locale code. Reading returns every locale currently stored (an empty object if none were set); writing a subset of locales only touches those locales, leaving others untouched.",
-            "additionalProperties": { "type": "string" },
-            "example": { "en": "Shop the latest phones.", "no": "Kjøp de nyeste telefonene." }
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "en": "Shop the latest phones.",
+              "no": "Kj\u00f8p de nyeste telefonene."
+            }
           },
-          "image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phones.jpg", "description": "URL or path to the category image. Not translatable." },
-          "meta_title": {
+          "image": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true,
+            "example": "https://example.com/phones.jpg",
+            "description": "URL or path to the category image. Not translatable."
+          },
+          "metaTitle": {
             "type": "object",
             "description": "Optional translatable `<title>` tag content for SEO, keyed by locale code. Reading returns every locale currently stored (an empty object if none were set); writing a subset of locales only touches those locales, leaving others untouched.",
-            "additionalProperties": { "type": "string" },
-            "example": { "en": "Phones | Example" }
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "en": "Phones | Example"
+            }
           },
-          "meta_description": {
+          "metaDescription": {
             "type": "object",
             "description": "Optional translatable meta description for SEO, keyed by locale code. Reading returns every locale currently stored (an empty object if none were set); writing a subset of locales only touches those locales, leaving others untouched.",
-            "additionalProperties": { "type": "string" },
-            "example": { "en": "Browse our phone selection." }
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "en": "Browse our phone selection."
+            }
           },
-          "meta_keywords": { "type": "string", "nullable": true, "example": "phones, mobile, smartphones", "description": "Optional meta keywords for SEO, comma-separated. Not translatable." },
-          "og_image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phones-og.jpg", "description": "URL or path to the Open Graph share image. Not translatable." },
-          "created_at": { "type": "string", "format": "date-time", "example": "2026-08-30T09:00:00.000000Z", "description": "UTC timestamp of category creation." },
-          "updated_at": { "type": "string", "format": "date-time", "example": "2026-08-30T09:00:00.000000Z", "description": "UTC timestamp of the last update to the category." }
+          "metaKeywords": {
+            "type": "string",
+            "nullable": true,
+            "example": "phones, mobile, smartphones",
+            "description": "Optional meta keywords for SEO, comma-separated. Not translatable."
+          },
+          "ogImage": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true,
+            "example": "https://example.com/phones-og.jpg",
+            "description": "URL or path to the Open Graph share image. Not translatable."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-30T09:00:00.000000Z",
+            "description": "UTC timestamp of category creation."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-30T09:00:00.000000Z",
+            "description": "UTC timestamp of the last update to the category."
+          }
         }
       },
       "ProductCategoryResourceObject": {
         "type": "object",
         "description": "A single JSON:API resource object of type `product-categories`.",
         "properties": {
-          "id": { "type": "string", "example": "1", "description": "The category's primary key, stringified per the JSON:API spec." },
-          "type": { "type": "string", "enum": ["product-categories"], "example": "product-categories", "description": "Always `product-categories` for this resource." },
-          "attributes": { "$ref": "#/components/schemas/ProductCategoryAttributes" }
+          "id": {
+            "type": "string",
+            "example": "1",
+            "description": "The category's primary key, stringified per the JSON:API spec."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "product-categories"
+            ],
+            "example": "product-categories",
+            "description": "Always `product-categories` for this resource."
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/ProductCategoryAttributes"
+          }
         }
       },
       "ProductCategoryDocument": {
         "type": "object",
         "description": "A JSON:API document wrapping a single `product-categories` resource.",
         "properties": {
-          "data": { "$ref": "#/components/schemas/ProductCategoryResourceObject" }
+          "data": {
+            "$ref": "#/components/schemas/ProductCategoryResourceObject"
+          }
         }
       },
       "ProductCategoryCollectionDocument": {
         "type": "object",
         "description": "A JSON:API document wrapping a paginated collection of `product-categories` resources.",
         "properties": {
-          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ProductCategoryResourceObject" } }
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductCategoryResourceObject"
+            }
+          }
         }
       },
       "ProductAttributes": {
         "type": "object",
         "description": "Attributes exposed for a `products` JSON:API resource.",
         "properties": {
-          "sku": { "type": "string", "maxLength": 255, "example": "SKU-0001", "description": "Stock keeping unit identifier. Not translatable." },
-          "slug": { "type": "string", "maxLength": 255, "example": "phone-x", "description": "URL-safe identifier for the product." },
+          "sku": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "SKU-0001",
+            "description": "Stock keeping unit identifier. Not translatable."
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "phone-x",
+            "description": "URL-safe identifier for the product."
+          },
           "title": {
             "type": "object",
             "description": "Translatable product title, keyed by locale code. Reading returns every locale currently stored; writing a subset of locales only touches those locales, leaving others untouched.",
-            "additionalProperties": { "type": "string" },
-            "example": { "en": "Phone X", "no": "Telefon X" }
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "en": "Phone X",
+              "no": "Telefon X"
+            }
           },
           "description": {
             "type": "object",
             "description": "Optional translatable long-form description, keyed by locale code. Reading returns every locale currently stored (an empty object if none were set); writing a subset of locales only touches those locales, leaving others untouched.",
-            "additionalProperties": { "type": "string" },
-            "example": { "en": "A great phone." }
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "en": "A great phone."
+            }
           },
-          "is_active": { "type": "boolean", "example": true, "description": "Whether the product is active. Defaults to `true`." },
-          "category_id": { "type": "integer", "nullable": true, "example": 1, "description": "The id of the owning `product-categories` resource, or `null` if uncategorized." },
-          "price": { "type": "number", "format": "float", "example": 599.99, "description": "Unit price." },
-          "stock_quantity": { "type": "integer", "minimum": 0, "example": 25, "description": "Units currently in stock. Never negative." },
-          "image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x.jpg", "description": "URL or path to the product image. Not translatable." },
-          "meta_title": {
+          "isActive": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the product is active. Defaults to `true`."
+          },
+          "categoryId": {
+            "type": "integer",
+            "nullable": true,
+            "example": 1,
+            "description": "The id of the owning `product-categories` resource, or `null` if uncategorized."
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "example": 599.99,
+            "description": "Unit price."
+          },
+          "stockQuantity": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 25,
+            "description": "Units currently in stock. Never negative."
+          },
+          "image": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true,
+            "example": "https://example.com/phone-x.jpg",
+            "description": "URL or path to the product image. Not translatable."
+          },
+          "metaTitle": {
             "type": "object",
             "description": "Optional translatable `<title>` tag content for SEO, keyed by locale code. Reading returns every locale currently stored (an empty object if none were set); writing a subset of locales only touches those locales, leaving others untouched.",
-            "additionalProperties": { "type": "string" },
-            "example": { "en": "Phone X | Example" }
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "en": "Phone X | Example"
+            }
           },
-          "meta_description": {
+          "metaDescription": {
             "type": "object",
             "description": "Optional translatable meta description for SEO, keyed by locale code. Reading returns every locale currently stored (an empty object if none were set); writing a subset of locales only touches those locales, leaving others untouched.",
-            "additionalProperties": { "type": "string" },
-            "example": { "en": "Buy Phone X." }
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "en": "Buy Phone X."
+            }
           },
-          "meta_keywords": { "type": "string", "nullable": true, "example": "phone, smartphone", "description": "Optional meta keywords for SEO, comma-separated. Not translatable." },
-          "og_image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x-og.jpg", "description": "URL or path to the Open Graph share image. Not translatable." },
-          "created_at": { "type": "string", "format": "date-time", "example": "2026-08-31T09:00:00.000000Z", "description": "UTC timestamp of product creation." },
-          "updated_at": { "type": "string", "format": "date-time", "example": "2026-08-31T09:00:00.000000Z", "description": "UTC timestamp of the last update to the product." }
+          "metaKeywords": {
+            "type": "string",
+            "nullable": true,
+            "example": "phone, smartphone",
+            "description": "Optional meta keywords for SEO, comma-separated. Not translatable."
+          },
+          "ogImage": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true,
+            "example": "https://example.com/phone-x-og.jpg",
+            "description": "URL or path to the Open Graph share image. Not translatable."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-31T09:00:00.000000Z",
+            "description": "UTC timestamp of product creation."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-31T09:00:00.000000Z",
+            "description": "UTC timestamp of the last update to the product."
+          }
         }
       },
       "ProductResourceObject": {
         "type": "object",
         "description": "A single JSON:API resource object of type `products`.",
         "properties": {
-          "id": { "type": "string", "example": "1", "description": "The product's primary key, stringified per the JSON:API spec." },
-          "type": { "type": "string", "enum": ["products"], "example": "products", "description": "Always `products` for this resource." },
-          "attributes": { "$ref": "#/components/schemas/ProductAttributes" }
+          "id": {
+            "type": "string",
+            "example": "1",
+            "description": "The product's primary key, stringified per the JSON:API spec."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "products"
+            ],
+            "example": "products",
+            "description": "Always `products` for this resource."
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/ProductAttributes"
+          }
         }
       },
       "ProductDocument": {
         "type": "object",
         "description": "A JSON:API document wrapping a single `products` resource.",
         "properties": {
-          "data": { "$ref": "#/components/schemas/ProductResourceObject" }
+          "data": {
+            "$ref": "#/components/schemas/ProductResourceObject"
+          }
         }
       },
       "ProductCollectionDocument": {
         "type": "object",
         "description": "A JSON:API document wrapping a paginated collection of `products` resources.",
         "properties": {
-          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ProductResourceObject" } }
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductResourceObject"
+            }
+          }
         }
       },
       "MetaMessageDocument": {
@@ -248,7 +552,10 @@
           "meta": {
             "type": "object",
             "properties": {
-              "message": { "type": "string", "example": "Logged out successfully." }
+              "message": {
+                "type": "string",
+                "example": "Logged out successfully."
+              }
             }
           }
         }
@@ -257,15 +564,35 @@
         "type": "object",
         "description": "A single JSON:API error object.",
         "properties": {
-          "status": { "type": "string", "example": "422", "description": "The HTTP status code applicable to this problem, as a string." },
-          "title": { "type": "string", "example": "Unprocessable Entity", "description": "A short, human-readable summary of the problem, derived from the HTTP status text." },
-          "code": { "type": "string", "example": "email_not_verified", "description": "An application-specific error code, present only where the API needs to disambiguate a status/title pair (currently only on the login `email_not_verified` case)." },
-          "detail": { "type": "string", "example": "These credentials do not match our records.", "description": "A human-readable explanation specific to this occurrence of the problem." },
+          "status": {
+            "type": "string",
+            "example": "422",
+            "description": "The HTTP status code applicable to this problem, as a string."
+          },
+          "title": {
+            "type": "string",
+            "example": "Unprocessable Entity",
+            "description": "A short, human-readable summary of the problem, derived from the HTTP status text."
+          },
+          "code": {
+            "type": "string",
+            "example": "email_not_verified",
+            "description": "An application-specific error code, present only where the API needs to disambiguate a status/title pair (currently only on the login `email_not_verified` case)."
+          },
+          "detail": {
+            "type": "string",
+            "example": "These credentials do not match our records.",
+            "description": "A human-readable explanation specific to this occurrence of the problem."
+          },
           "source": {
             "type": "object",
             "description": "Present on validation errors; identifies the offending request field.",
             "properties": {
-              "pointer": { "type": "string", "example": "/data/attributes/email", "description": "A JSON Pointer to the request field that failed validation." }
+              "pointer": {
+                "type": "string",
+                "example": "/data/attributes/email",
+                "description": "A JSON Pointer to the request field that failed validation."
+              }
             }
           }
         }
@@ -276,7 +603,313 @@
         "properties": {
           "errors": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/JsonApiErrorObject" }
+            "items": {
+              "$ref": "#/components/schemas/JsonApiErrorObject"
+            }
+          }
+        }
+      },
+      "OrderStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "paid",
+          "cancelled",
+          "expired",
+          "refunded"
+        ],
+        "description": "Order lifecycle state. `pending` orders hold stock reservations until `expiresAt`."
+      },
+      "PaymentStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "succeeded",
+          "failed",
+          "refunded"
+        ],
+        "description": "Payment attempt outcome as reconciled from Stripe webhook events."
+      },
+      "OrderItemAttributes": {
+        "type": "object",
+        "description": "Attributes exposed for an `order-items` JSON:API resource. `sku`, `title`, and `unitPrice` are snapshots taken at purchase time and never change even if the underlying product is edited or deleted later.",
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "nullable": true,
+            "example": 1,
+            "description": "The id of the purchased `products` resource, or `null` if that product has since been deleted."
+          },
+          "sku": {
+            "type": "string",
+            "example": "SKU-0001",
+            "description": "Snapshot of the product's SKU at purchase time."
+          },
+          "title": {
+            "type": "string",
+            "example": "Phone X",
+            "description": "Snapshot of the product's title (single string, not translatable) at purchase time."
+          },
+          "unitPrice": {
+            "type": "integer",
+            "example": 59999,
+            "description": "Snapshot of the unit price at purchase time, in minor units (\u00f8re)."
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 2,
+            "description": "Quantity purchased."
+          },
+          "lineTotal": {
+            "type": "integer",
+            "example": 119998,
+            "description": "`unitPrice * quantity`, stored rather than computed, in minor units (\u00f8re)."
+          }
+        }
+      },
+      "OrderItemResourceObject": {
+        "type": "object",
+        "description": "A single JSON:API resource object of type `order-items`.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1",
+            "description": "The order item's primary key, stringified per the JSON:API spec."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "order-items"
+            ],
+            "example": "order-items",
+            "description": "Always `order-items` for this resource."
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/OrderItemAttributes"
+          }
+        }
+      },
+      "PaymentAttributes": {
+        "type": "object",
+        "description": "Attributes exposed for a `payments` JSON:API resource. An order may have more than one payment row over its lifetime (e.g. a failed attempt followed by a successful retry).",
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "example": 1,
+            "description": "The id of the owning `orders` resource."
+          },
+          "provider": {
+            "type": "string",
+            "example": "stripe",
+            "description": "Payment gateway that produced this record. Only `stripe` exists today."
+          },
+          "stripeCheckoutSessionId": {
+            "type": "string",
+            "nullable": true,
+            "example": "cs_test_1234567890",
+            "description": "The Stripe Checkout Session this payment was recorded against, if any."
+          },
+          "stripePaymentIntentId": {
+            "type": "string",
+            "nullable": true,
+            "example": "pi_1234567890",
+            "description": "The Stripe PaymentIntent this payment was recorded against, if any."
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "amount": {
+            "type": "integer",
+            "example": 119998,
+            "description": "Amount in minor units (\u00f8re)."
+          },
+          "currency": {
+            "type": "string",
+            "example": "nok",
+            "description": "Lowercase ISO 4217 currency code, per Stripe's convention."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-05T09:00:00.000000Z",
+            "description": "UTC timestamp this payment record was created."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-05T09:00:00.000000Z",
+            "description": "UTC timestamp of the last update to this payment record."
+          }
+        }
+      },
+      "PaymentResourceObject": {
+        "type": "object",
+        "description": "A single JSON:API resource object of type `payments`.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1",
+            "description": "The payment's primary key, stringified per the JSON:API spec."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "payments"
+            ],
+            "example": "payments",
+            "description": "Always `payments` for this resource."
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/PaymentAttributes"
+          }
+        }
+      },
+      "OrderAttributes": {
+        "type": "object",
+        "description": "Attributes exposed for an `orders` JSON:API resource. `items` is always present; `payments` is only populated on endpoints that explicitly load it (order detail views).",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "example": 1,
+            "description": "The id of the owning `users` resource."
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "currency": {
+            "type": "string",
+            "example": "nok",
+            "description": "Lowercase ISO 4217 currency code, per Stripe's convention."
+          },
+          "subtotal": {
+            "type": "integer",
+            "example": 119998,
+            "description": "Sum of line totals, in minor units (\u00f8re)."
+          },
+          "total": {
+            "type": "integer",
+            "example": 119998,
+            "description": "Order total, in minor units (\u00f8re). Equal to `subtotal` (no shipping/tax in this scope)."
+          },
+          "stripeCheckoutSessionId": {
+            "type": "string",
+            "nullable": true,
+            "example": "cs_test_1234567890",
+            "description": "Set once checkout is initiated via `POST /orders/{order}/checkout`."
+          },
+          "stripePaymentIntentId": {
+            "type": "string",
+            "nullable": true,
+            "example": "pi_1234567890",
+            "description": "Set once Stripe creates the PaymentIntent for a successful checkout."
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null,
+            "description": "UTC timestamp the order was marked paid, or `null` if unpaid."
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null,
+            "description": "UTC timestamp of a manual cancellation, or `null`."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2026-09-05T09:30:00.000000Z",
+            "description": "Stock hold deadline. Checkout is rejected once this has passed."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-05T09:00:00.000000Z",
+            "description": "UTC timestamp of order creation."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-05T09:00:00.000000Z",
+            "description": "UTC timestamp of the last update to the order."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemResourceObject"
+            },
+            "description": "The order's line items."
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentResourceObject"
+            },
+            "description": "The order's payment attempts, newest reconciliation state per row. Empty until a webhook records a payment."
+          }
+        }
+      },
+      "OrderResourceObject": {
+        "type": "object",
+        "description": "A single JSON:API resource object of type `orders`.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "1",
+            "description": "The order's primary key, stringified per the JSON:API spec."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "orders"
+            ],
+            "example": "orders",
+            "description": "Always `orders` for this resource."
+          },
+          "attributes": {
+            "$ref": "#/components/schemas/OrderAttributes"
+          }
+        }
+      },
+      "OrderDocument": {
+        "type": "object",
+        "description": "A JSON:API document wrapping a single `orders` resource.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/OrderResourceObject"
+          }
+        }
+      },
+      "OrderCollectionDocument": {
+        "type": "object",
+        "description": "A JSON:API document wrapping a paginated collection of `orders` resources.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderResourceObject"
+            }
+          }
+        }
+      },
+      "CheckoutSessionDocument": {
+        "type": "object",
+        "description": "Response of `POST /orders/{order}/checkout`. Not a JSON:API resource document \u2014 just a redirect target for the customer's browser.",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "checkoutUrl": {
+                "type": "string",
+                "format": "uri",
+                "example": "https://checkout.stripe.com/c/pay/cs_test_1234567890",
+                "description": "Stripe-hosted Checkout page URL. The client should redirect the browser here."
+              }
+            }
           }
         }
       }
@@ -286,8 +919,18 @@
         "description": "No valid bearer token was supplied (missing, malformed, expired, or revoked token).",
         "content": {
           "application/vnd.api+json": {
-            "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-            "example": { "errors": [{ "status": "401", "title": "Unauthorized", "detail": "Authentication required." }] }
+            "schema": {
+              "$ref": "#/components/schemas/JsonApiErrorDocument"
+            },
+            "example": {
+              "errors": [
+                {
+                  "status": "401",
+                  "title": "Unauthorized",
+                  "detail": "Authentication required."
+                }
+              ]
+            }
           }
         }
       },
@@ -295,22 +938,55 @@
         "description": "The bearer token is valid but was not issued for the guard this route belongs to (e.g. a `user` token calling an `admin` route, or vice versa).",
         "content": {
           "application/vnd.api+json": {
-            "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-            "example": { "errors": [{ "status": "403", "title": "Forbidden" }] }
+            "schema": {
+              "$ref": "#/components/schemas/JsonApiErrorDocument"
+            },
+            "example": {
+              "errors": [
+                {
+                  "status": "403",
+                  "title": "Forbidden"
+                }
+              ]
+            }
           }
         }
       },
       "TooManyRequests": {
         "description": "Rate limit exceeded for this endpoint. Retry after the interval given in the `Retry-After` response header.",
         "headers": {
-          "Retry-After": { "schema": { "type": "integer" }, "description": "Seconds to wait before retrying." },
-          "X-RateLimit-Limit": { "schema": { "type": "integer" }, "description": "Requests allowed per window." },
-          "X-RateLimit-Remaining": { "schema": { "type": "integer" }, "description": "Requests remaining in the current window." }
+          "Retry-After": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Seconds to wait before retrying."
+          },
+          "X-RateLimit-Limit": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Requests allowed per window."
+          },
+          "X-RateLimit-Remaining": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Requests remaining in the current window."
+          }
         },
         "content": {
           "application/vnd.api+json": {
-            "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-            "example": { "errors": [{ "status": "429", "title": "Too Many Requests" }] }
+            "schema": {
+              "$ref": "#/components/schemas/JsonApiErrorDocument"
+            },
+            "example": {
+              "errors": [
+                {
+                  "status": "429",
+                  "title": "Too Many Requests"
+                }
+              ]
+            }
           }
         }
       },
@@ -318,8 +994,18 @@
         "description": "An unexpected server error occurred.",
         "content": {
           "application/vnd.api+json": {
-            "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-            "example": { "errors": [{ "status": "500", "title": "Server Error", "detail": "An unexpected error occurred." }] }
+            "schema": {
+              "$ref": "#/components/schemas/JsonApiErrorDocument"
+            },
+            "example": {
+              "errors": [
+                {
+                  "status": "500",
+                  "title": "Server Error",
+                  "detail": "An unexpected error occurred."
+                }
+              ]
+            }
           }
         }
       }
@@ -328,7 +1014,9 @@
   "paths": {
     "/register": {
       "post": {
-        "tags": ["User Auth"],
+        "tags": [
+          "User Auth"
+        ],
         "summary": "Register a new user account",
         "description": "Creates a `user` account and dispatches a signed email-verification link. No bearer token is issued at this step: the account cannot log in until the address is verified via `GET /email/verify/{id}/{hash}`.",
         "operationId": "registerUser",
@@ -338,12 +1026,38 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["name", "email", "password", "password_confirmation"],
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "passwordConfirmation"
+                ],
                 "properties": {
-                  "name": { "type": "string", "maxLength": 255, "example": "Jane Doe", "description": "Required. The display name for the new account. Max 255 characters." },
-                  "email": { "type": "string", "format": "email", "maxLength": 255, "example": "jane@example.com", "description": "Required. Must be a syntactically valid email, at most 255 characters, and unique among existing users." },
-                  "password": { "type": "string", "format": "password", "example": "password123", "description": "Required. Must satisfy the application's default password policy (see `Illuminate\\Validation\\Rules\\Password::defaults()`) and match `password_confirmation`." },
-                  "password_confirmation": { "type": "string", "format": "password", "example": "password123", "description": "Required. Must exactly match `password`." }
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "Jane Doe",
+                    "description": "Required. The display name for the new account. Max 255 characters."
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 255,
+                    "example": "jane@example.com",
+                    "description": "Required. Must be a syntactically valid email, at most 255 characters, and unique among existing users."
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "password123",
+                    "description": "Required. Must satisfy the application's default password policy (see `Illuminate\\Validation\\Rules\\Password::defaults()`) and match `passwordConfirmation`."
+                  },
+                  "passwordConfirmation": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "password123",
+                    "description": "Required. Must exactly match `password`."
+                  }
                 }
               }
             }
@@ -354,7 +1068,9 @@
             "description": "Account created; verification email dispatched.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/UserDocumentWithRegistrationMessage" },
+                "schema": {
+                  "$ref": "#/components/schemas/UserDocumentWithRegistrationMessage"
+                },
                 "example": {
                   "data": {
                     "id": "1",
@@ -362,12 +1078,14 @@
                     "attributes": {
                       "name": "Jane Doe",
                       "email": "jane@example.com",
-                      "email_verified_at": null,
-                      "created_at": "2026-08-29T10:00:00.000000Z",
-                      "updated_at": "2026-08-29T10:00:00.000000Z"
+                      "emailVerifiedAt": null,
+                      "createdAt": "2026-08-29T10:00:00.000000Z",
+                      "updatedAt": "2026-08-29T10:00:00.000000Z"
                     }
                   },
-                  "meta": { "message": "Registered successfully. Please check your email to verify your account." }
+                  "meta": {
+                    "message": "Registered successfully. Please check your email to verify your account."
+                  }
                 }
               }
             }
@@ -376,24 +1094,51 @@
             "description": "Validation failed: a required field is missing, malformed, the email is already taken, or the passwords do not match.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
                 "example": {
                   "errors": [
-                    { "status": "422", "title": "Unprocessable Entity", "detail": "The name field is required.", "source": { "pointer": "/data/attributes/name" } },
-                    { "status": "422", "title": "Unprocessable Entity", "detail": "The email field is required.", "source": { "pointer": "/data/attributes/email" } },
-                    { "status": "422", "title": "Unprocessable Entity", "detail": "The password field is required.", "source": { "pointer": "/data/attributes/password" } }
+                    {
+                      "status": "422",
+                      "title": "Unprocessable Entity",
+                      "detail": "The name field is required.",
+                      "source": {
+                        "pointer": "/data/attributes/name"
+                      }
+                    },
+                    {
+                      "status": "422",
+                      "title": "Unprocessable Entity",
+                      "detail": "The email field is required.",
+                      "source": {
+                        "pointer": "/data/attributes/email"
+                      }
+                    },
+                    {
+                      "status": "422",
+                      "title": "Unprocessable Entity",
+                      "detail": "The password field is required.",
+                      "source": {
+                        "pointer": "/data/attributes/password"
+                      }
+                    }
                   ]
                 }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/login": {
       "post": {
-        "tags": ["User Auth"],
+        "tags": [
+          "User Auth"
+        ],
         "summary": "Log in as a user",
         "description": "Authenticates a `user` account by email and password and, if the address is verified, issues a Sanctum token scoped to the `user` ability. Rate-limited to 6 requests per minute per client IP; exceeding it returns 429.",
         "operationId": "loginUser",
@@ -403,10 +1148,23 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email", "password"],
+                "required": [
+                  "email",
+                  "password"
+                ],
                 "properties": {
-                  "email": { "type": "string", "format": "email", "example": "jane@example.com", "description": "Required. The account's registered email address." },
-                  "password": { "type": "string", "format": "password", "example": "password123", "description": "Required. The account's plain-text password." }
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "jane@example.com",
+                    "description": "Required. The account's registered email address."
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "password123",
+                    "description": "Required. The account's plain-text password."
+                  }
                 }
               }
             }
@@ -417,7 +1175,9 @@
             "description": "Credentials valid, email verified: token issued.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/UserDocumentWithToken" },
+                "schema": {
+                  "$ref": "#/components/schemas/UserDocumentWithToken"
+                },
                 "example": {
                   "data": {
                     "id": "1",
@@ -425,12 +1185,15 @@
                     "attributes": {
                       "name": "Jane Doe",
                       "email": "jane@example.com",
-                      "email_verified_at": "2026-08-29T10:05:00.000000Z",
-                      "created_at": "2026-08-29T10:00:00.000000Z",
-                      "updated_at": "2026-08-29T10:05:00.000000Z"
+                      "emailVerifiedAt": "2026-08-29T10:05:00.000000Z",
+                      "createdAt": "2026-08-29T10:00:00.000000Z",
+                      "updatedAt": "2026-08-29T10:05:00.000000Z"
                     }
                   },
-                  "meta": { "message": "Logged in successfully.", "token": "1|LZs9examplePlainTextToken" }
+                  "meta": {
+                    "message": "Logged in successfully.",
+                    "token": "1|LZs9examplePlainTextToken"
+                  }
                 }
               }
             }
@@ -439,8 +1202,19 @@
             "description": "Credentials are valid but the account's email address has not been verified yet.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-                "example": { "errors": [{ "status": "403", "title": "Forbidden", "detail": "Your email address is not verified.", "code": "email_not_verified" }] }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "403",
+                      "title": "Forbidden",
+                      "detail": "Your email address is not verified.",
+                      "code": "email_not_verified"
+                    }
+                  ]
+                }
               }
             }
           },
@@ -448,41 +1222,76 @@
             "description": "Validation failed, or the email/password combination does not match any record. The same generic message is used for both a nonexistent email and a wrong password, to avoid leaking which one was incorrect.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-                "example": { "errors": [{ "status": "422", "title": "Unprocessable Entity", "detail": "These credentials do not match our records.", "source": { "pointer": "/data/attributes/email" } }] }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "422",
+                      "title": "Unprocessable Entity",
+                      "detail": "These credentials do not match our records.",
+                      "source": {
+                        "pointer": "/data/attributes/email"
+                      }
+                    }
+                  ]
+                }
               }
             }
           },
-          "429": { "$ref": "#/components/responses/TooManyRequests" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/logout": {
       "post": {
-        "tags": ["User Auth"],
+        "tags": [
+          "User Auth"
+        ],
         "summary": "Log out and revoke the current token",
         "description": "Deletes the Sanctum access token used to authenticate this request, immediately invalidating it. Requires a valid `user` bearer token.",
         "operationId": "logoutUser",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Token revoked.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/MetaMessageDocument" },
-                "example": { "meta": { "message": "Logged out successfully." } }
+                "schema": {
+                  "$ref": "#/components/schemas/MetaMessageDocument"
+                },
+                "example": {
+                  "meta": {
+                    "message": "Logged out successfully."
+                  }
+                }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/email/verify/{id}/{hash}": {
       "get": {
-        "tags": ["User Auth"],
+        "tags": [
+          "User Auth"
+        ],
         "summary": "Verify a user's email address",
         "description": "Consumes the signed link sent by the registration (or resend) email. The route itself is protected by Laravel's `signed` middleware, which rejects any request whose URL signature is missing, invalid, or expired (this shows up as a generic 403 before the controller ever runs); the controller then independently re-checks that `hash` equals `sha1(email)` for the given user as defense in depth. Verifying an already-verified address is idempotent and still returns 200.",
         "operationId": "verifyUserEmail",
@@ -491,28 +1300,40 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "integer", "example": 1 },
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
             "description": "The numeric primary key of the user to verify."
           },
           {
             "name": "hash",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "example": "5e0a6c3f2d1b4a...e9" },
+            "schema": {
+              "type": "string",
+              "example": "5e0a6c3f2d1b4a...e9"
+            },
             "description": "SHA-1 hash of the user's email address, as embedded in the verification link."
           },
           {
             "name": "expires",
             "in": "query",
             "required": true,
-            "schema": { "type": "integer", "example": 1756468800 },
+            "schema": {
+              "type": "integer",
+              "example": 1756468800
+            },
             "description": "Unix timestamp after which the signed URL is no longer valid. Part of Laravel's URL signing, validated by the `signed` route middleware."
           },
           {
             "name": "signature",
             "in": "query",
             "required": true,
-            "schema": { "type": "string", "example": "a1b2c3d4e5f6..." },
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4e5f6..."
+            },
             "description": "HMAC signature over the full URL and query string, validated by the `signed` route middleware."
           }
         ],
@@ -521,10 +1342,24 @@
             "description": "Email verified (or was already verified; response is idempotent).",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/MetaMessageDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/MetaMessageDocument"
+                },
                 "examples": {
-                  "verified": { "value": { "meta": { "message": "Email address verified successfully." } } },
-                  "alreadyVerified": { "value": { "meta": { "message": "Email address already verified." } } }
+                  "verified": {
+                    "value": {
+                      "meta": {
+                        "message": "Email address verified successfully."
+                      }
+                    }
+                  },
+                  "alreadyVerified": {
+                    "value": {
+                      "meta": {
+                        "message": "Email address already verified."
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -533,10 +1368,31 @@
             "description": "The URL signature is missing, invalid, or expired, or the `hash` path segment does not match `sha1(email)` for the given user.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
                 "examples": {
-                  "invalidLink": { "value": { "errors": [{ "status": "403", "title": "Forbidden", "detail": "Invalid verification link." }] } },
-                  "invalidSignature": { "value": { "errors": [{ "status": "403", "title": "Forbidden" }] } }
+                  "invalidLink": {
+                    "value": {
+                      "errors": [
+                        {
+                          "status": "403",
+                          "title": "Forbidden",
+                          "detail": "Invalid verification link."
+                        }
+                      ]
+                    }
+                  },
+                  "invalidSignature": {
+                    "value": {
+                      "errors": [
+                        {
+                          "status": "403",
+                          "title": "Forbidden"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -545,55 +1401,102 @@
             "description": "No user exists with the given `id`.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/email/verification-notification": {
       "post": {
-        "tags": ["User Auth"],
+        "tags": [
+          "User Auth"
+        ],
         "summary": "Resend the email verification link",
         "description": "Re-sends the signed verification link to the authenticated user's email address; a no-op returning 200 if the address is already verified. Requires a valid `user` bearer token. Rate-limited to 6 requests per minute per authenticated user (falling back to IP if unauthenticated, though authentication is required to reach the handler at all).",
         "operationId": "resendUserVerification",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Verification email sent, or the address was already verified (idempotent no-op).",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/MetaMessageDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/MetaMessageDocument"
+                },
                 "examples": {
-                  "sent": { "value": { "meta": { "message": "Verification link sent." } } },
-                  "alreadyVerified": { "value": { "meta": { "message": "Email address already verified." } } }
+                  "sent": {
+                    "value": {
+                      "meta": {
+                        "message": "Verification link sent."
+                      }
+                    }
+                  },
+                  "alreadyVerified": {
+                    "value": {
+                      "meta": {
+                        "message": "Email address already verified."
+                      }
+                    }
+                  }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
-          "429": { "$ref": "#/components/responses/TooManyRequests" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/me": {
       "get": {
-        "tags": ["User Auth"],
+        "tags": [
+          "User Auth"
+        ],
         "summary": "Get the authenticated user's profile",
         "description": "Returns the `users` resource for the account owning the bearer token. Requires a `user`-scoped token; an `admin` token is rejected with 403.",
         "operationId": "getCurrentUser",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "The authenticated user's profile.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/UserDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/UserDocument"
+                },
                 "example": {
                   "data": {
                     "id": "1",
@@ -601,26 +1504,34 @@
                     "attributes": {
                       "name": "Jane Doe",
                       "email": "jane@example.com",
-                      "email_verified_at": "2026-08-29T10:05:00.000000Z",
-                      "created_at": "2026-08-29T10:00:00.000000Z",
-                      "updated_at": "2026-08-29T10:05:00.000000Z"
+                      "emailVerifiedAt": "2026-08-29T10:05:00.000000Z",
+                      "createdAt": "2026-08-29T10:00:00.000000Z",
+                      "updatedAt": "2026-08-29T10:05:00.000000Z"
                     }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/admin/login": {
       "post": {
-        "tags": ["Admin Auth"],
+        "tags": [
+          "Admin Auth"
+        ],
         "summary": "Log in as an admin",
-        "description": "Authenticates an `admin` account by email and password. Unlike the user guard, email verification is not required, but the account must have `is_active = true`; inactive or soft-deleted admins fail with the same generic credentials error as a wrong password, to avoid revealing account state. Issues a Sanctum token scoped to the `admin` ability. Rate-limited to 6 requests per minute per client IP.",
+        "description": "Authenticates an `admin` account by email and password. Unlike the user guard, email verification is not required, but the account must have `isActive = true`; inactive or soft-deleted admins fail with the same generic credentials error as a wrong password, to avoid revealing account state. Issues a Sanctum token scoped to the `admin` ability. Rate-limited to 6 requests per minute per client IP.",
         "operationId": "loginAdmin",
         "requestBody": {
           "required": true,
@@ -628,10 +1539,23 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["email", "password"],
+                "required": [
+                  "email",
+                  "password"
+                ],
                 "properties": {
-                  "email": { "type": "string", "format": "email", "example": "admin@example.com", "description": "Required. The admin account's registered email address." },
-                  "password": { "type": "string", "format": "password", "example": "password", "description": "Required. The admin account's plain-text password." }
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "admin@example.com",
+                    "description": "Required. The admin account's registered email address."
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "password",
+                    "description": "Required. The admin account's plain-text password."
+                  }
                 }
               }
             }
@@ -642,7 +1566,9 @@
             "description": "Credentials valid and account active: token issued.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/AdminDocumentWithToken" },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDocumentWithToken"
+                },
                 "example": {
                   "data": {
                     "id": "1",
@@ -650,13 +1576,16 @@
                     "attributes": {
                       "name": "Site Admin",
                       "email": "admin@example.com",
-                      "email_verified_at": "2026-07-01T09:00:00.000000Z",
-                      "is_active": true,
-                      "created_at": "2026-07-01T09:00:00.000000Z",
-                      "updated_at": "2026-07-01T09:00:00.000000Z"
+                      "emailVerifiedAt": "2026-07-01T09:00:00.000000Z",
+                      "isActive": true,
+                      "createdAt": "2026-07-01T09:00:00.000000Z",
+                      "updatedAt": "2026-07-01T09:00:00.000000Z"
                     }
                   },
-                  "meta": { "message": "Logged in successfully.", "token": "2|Xq7vExamplePlainTextToken" }
+                  "meta": {
+                    "message": "Logged in successfully.",
+                    "token": "2|Xq7vExamplePlainTextToken"
+                  }
                 }
               }
             }
@@ -665,32 +1594,65 @@
             "description": "Validation failed, or the email/password combination does not match an active record (covers wrong password, unknown email, inactive account, and soft-deleted account alike).",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-                "example": { "errors": [{ "status": "422", "title": "Unprocessable Entity", "detail": "These credentials do not match our records.", "source": { "pointer": "/data/attributes/email" } }] }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "422",
+                      "title": "Unprocessable Entity",
+                      "detail": "These credentials do not match our records.",
+                      "source": {
+                        "pointer": "/data/attributes/email"
+                      }
+                    }
+                  ]
+                }
               }
             }
           },
-          "429": { "$ref": "#/components/responses/TooManyRequests" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/admin/product-categories": {
       "get": {
-        "tags": ["Admin Product Categories"],
+        "tags": [
+          "Admin Product Categories"
+        ],
         "summary": "List product categories",
         "description": "Returns a paginated collection of `product-categories` resources. Requires an `admin`-scoped token.",
         "operationId": "listProductCategories",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "parameters": [
-          { "name": "page", "in": "query", "schema": { "type": "integer", "example": 1 }, "description": "Page number of results to return." }
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "Page number of results to return."
+          }
         ],
         "responses": {
           "200": {
             "description": "A page of product categories.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/ProductCategoryCollectionDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategoryCollectionDocument"
+                },
                 "example": {
                   "data": [
                     {
@@ -699,14 +1661,21 @@
                       "attributes": {
                         "slug": "phones",
                         "title": "Phones",
-                        "description": { "en": "Shop the latest phones.", "no": "Kjøp de nyeste telefonene." },
+                        "description": {
+                          "en": "Shop the latest phones.",
+                          "no": "Kj\u00f8p de nyeste telefonene."
+                        },
                         "image": "https://example.com/phones.jpg",
-                        "meta_title": { "en": "Phones | Example" },
-                        "meta_description": { "en": "Browse our phone selection." },
-                        "meta_keywords": "phones, mobile, smartphones",
-                        "og_image": "https://example.com/phones-og.jpg",
-                        "created_at": "2026-08-30T09:00:00.000000Z",
-                        "updated_at": "2026-08-30T09:00:00.000000Z"
+                        "metaTitle": {
+                          "en": "Phones | Example"
+                        },
+                        "metaDescription": {
+                          "en": "Browse our phone selection."
+                        },
+                        "metaKeywords": "phones, mobile, smartphones",
+                        "ogImage": "https://example.com/phones-og.jpg",
+                        "createdAt": "2026-08-30T09:00:00.000000Z",
+                        "updatedAt": "2026-08-30T09:00:00.000000Z"
                       }
                     }
                   ]
@@ -714,51 +1683,106 @@
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       },
       "post": {
-        "tags": ["Admin Product Categories"],
+        "tags": [
+          "Admin Product Categories"
+        ],
         "summary": "Create a product category",
         "description": "Creates a `product-categories` resource. Requires an `admin`-scoped token.",
         "operationId": "createProductCategory",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["slug", "title"],
+                "required": [
+                  "slug",
+                  "title"
+                ],
                 "properties": {
-                  "slug": { "type": "string", "maxLength": 255, "example": "phones", "description": "Required. Must be unique among existing categories, at most 255 characters." },
-                  "title": { "type": "string", "maxLength": 255, "example": "Phones", "description": "Required. At most 255 characters." },
+                  "slug": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "phones",
+                    "description": "Required. Must be unique among existing categories, at most 255 characters."
+                  },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "Phones",
+                    "description": "Required. At most 255 characters."
+                  },
                   "description": {
                     "type": "object",
                     "nullable": true,
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "Shop the latest phones.", "no": "Kjøp de nyeste telefonene." },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "Shop the latest phones.",
+                      "no": "Kj\u00f8p de nyeste telefonene."
+                    },
                     "description": "Optional. An object mapping locale code to description string. Omit to store no translations."
                   },
-                  "image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phones.jpg", "description": "Optional. URL or path to the category image." },
-                  "meta_title": {
+                  "image": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true,
+                    "example": "https://example.com/phones.jpg",
+                    "description": "Optional. URL or path to the category image."
+                  },
+                  "metaTitle": {
                     "type": "object",
                     "nullable": true,
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "Phones | Example" },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "Phones | Example"
+                    },
                     "description": "Optional. An object mapping locale code to meta title string. Omit to store no translations."
                   },
-                  "meta_description": {
+                  "metaDescription": {
                     "type": "object",
                     "nullable": true,
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "Browse our phone selection." },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "Browse our phone selection."
+                    },
                     "description": "Optional. An object mapping locale code to meta description string. Omit to store no translations."
                   },
-                  "meta_keywords": { "type": "string", "nullable": true, "example": "phones, mobile, smartphones", "description": "Optional. Comma-separated meta keywords." },
-                  "og_image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phones-og.jpg", "description": "Optional. URL or path to the Open Graph share image." }
+                  "metaKeywords": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "phones, mobile, smartphones",
+                    "description": "Optional. Comma-separated meta keywords."
+                  },
+                  "ogImage": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true,
+                    "example": "https://example.com/phones-og.jpg",
+                    "description": "Optional. URL or path to the Open Graph share image."
+                  }
                 }
               }
             }
@@ -769,7 +1793,9 @@
             "description": "Category created.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/ProductCategoryDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategoryDocument"
+                },
                 "example": {
                   "data": {
                     "id": "1",
@@ -777,55 +1803,94 @@
                     "attributes": {
                       "slug": "phones",
                       "title": "Phones",
-                      "description": { "en": "Shop the latest phones.", "no": "Kjøp de nyeste telefonene." },
+                      "description": {
+                        "en": "Shop the latest phones.",
+                        "no": "Kj\u00f8p de nyeste telefonene."
+                      },
                       "image": "https://example.com/phones.jpg",
-                      "meta_title": { "en": "Phones | Example" },
-                      "meta_description": { "en": "Browse our phone selection." },
-                      "meta_keywords": "phones, mobile, smartphones",
-                      "og_image": "https://example.com/phones-og.jpg",
-                      "created_at": "2026-08-30T09:00:00.000000Z",
-                      "updated_at": "2026-08-30T09:00:00.000000Z"
+                      "metaTitle": {
+                        "en": "Phones | Example"
+                      },
+                      "metaDescription": {
+                        "en": "Browse our phone selection."
+                      },
+                      "metaKeywords": "phones, mobile, smartphones",
+                      "ogImage": "https://example.com/phones-og.jpg",
+                      "createdAt": "2026-08-30T09:00:00.000000Z",
+                      "updatedAt": "2026-08-30T09:00:00.000000Z"
                     }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
           "422": {
             "description": "Validation failed: a required field is missing, malformed, or the slug is already taken.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
                 "example": {
                   "errors": [
-                    { "status": "422", "title": "Unprocessable Entity", "detail": "The slug has already been taken.", "source": { "pointer": "/data/attributes/slug" } }
+                    {
+                      "status": "422",
+                      "title": "Unprocessable Entity",
+                      "detail": "The slug has already been taken.",
+                      "source": {
+                        "pointer": "/data/attributes/slug"
+                      }
+                    }
                   ]
                 }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/admin/product-categories/{product_category}": {
       "get": {
-        "tags": ["Admin Product Categories"],
+        "tags": [
+          "Admin Product Categories"
+        ],
         "summary": "Get a product category",
         "description": "Returns a single `product-categories` resource. Requires an `admin`-scoped token.",
         "operationId": "getProductCategory",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "parameters": [
-          { "name": "product_category", "in": "path", "required": true, "schema": { "type": "integer", "example": 1 }, "description": "The category's numeric primary key." }
+          {
+            "name": "product_category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The category's numeric primary key."
+          }
         ],
         "responses": {
           "200": {
             "description": "The requested product category.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/ProductCategoryDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategoryDocument"
+                },
                 "example": {
                   "data": {
                     "id": "1",
@@ -833,42 +1898,79 @@
                     "attributes": {
                       "slug": "phones",
                       "title": "Phones",
-                      "description": { "en": "Shop the latest phones.", "no": "Kjøp de nyeste telefonene." },
+                      "description": {
+                        "en": "Shop the latest phones.",
+                        "no": "Kj\u00f8p de nyeste telefonene."
+                      },
                       "image": "https://example.com/phones.jpg",
-                      "meta_title": { "en": "Phones | Example" },
-                      "meta_description": { "en": "Browse our phone selection." },
-                      "meta_keywords": "phones, mobile, smartphones",
-                      "og_image": "https://example.com/phones-og.jpg",
-                      "created_at": "2026-08-30T09:00:00.000000Z",
-                      "updated_at": "2026-08-30T09:00:00.000000Z"
+                      "metaTitle": {
+                        "en": "Phones | Example"
+                      },
+                      "metaDescription": {
+                        "en": "Browse our phone selection."
+                      },
+                      "metaKeywords": "phones, mobile, smartphones",
+                      "ogImage": "https://example.com/phones-og.jpg",
+                      "createdAt": "2026-08-30T09:00:00.000000Z",
+                      "updatedAt": "2026-08-30T09:00:00.000000Z"
                     }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
           "404": {
             "description": "No product category exists with the given id.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       },
       "patch": {
-        "tags": ["Admin Product Categories"],
+        "tags": [
+          "Admin Product Categories"
+        ],
         "summary": "Update a product category",
         "description": "Partially updates a `product-categories` resource; all fields are optional. Setting a translatable field only replaces the locales present in the payload, leaving other stored locales untouched. Requires an `admin`-scoped token.",
         "operationId": "updateProductCategory",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "parameters": [
-          { "name": "product_category", "in": "path", "required": true, "schema": { "type": "integer", "example": 1 }, "description": "The category's numeric primary key." }
+          {
+            "name": "product_category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The category's numeric primary key."
+          }
         ],
         "requestBody": {
           "required": false,
@@ -877,29 +1979,64 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "slug": { "type": "string", "maxLength": 255, "example": "mobile-phones", "description": "Must be unique among other categories, at most 255 characters." },
-                  "title": { "type": "string", "maxLength": 255, "example": "Mobile Phones" },
+                  "slug": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "mobile-phones",
+                    "description": "Must be unique among other categories, at most 255 characters."
+                  },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "Mobile Phones"
+                  },
                   "description": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" },
-                    "example": { "no": "Kjøp de nyeste telefonene." },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "no": "Kj\u00f8p de nyeste telefonene."
+                    },
                     "description": "A non-empty object mapping locale code to description string. Only the given locales are updated."
                   },
-                  "image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/mobile-phones.jpg" },
-                  "meta_title": {
+                  "image": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true,
+                    "example": "https://example.com/mobile-phones.jpg"
+                  },
+                  "metaTitle": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "Mobile Phones | Example" },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "Mobile Phones | Example"
+                    },
                     "description": "A non-empty object mapping locale code to meta title string. Only the given locales are updated."
                   },
-                  "meta_description": {
+                  "metaDescription": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "Browse our mobile phone selection." },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "Browse our mobile phone selection."
+                    },
                     "description": "A non-empty object mapping locale code to meta description string. Only the given locales are updated."
                   },
-                  "meta_keywords": { "type": "string", "nullable": true, "example": "mobile phones, smartphones" },
-                  "og_image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/mobile-phones-og.jpg" }
+                  "metaKeywords": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "mobile phones, smartphones"
+                  },
+                  "ogImage": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true,
+                    "example": "https://example.com/mobile-phones-og.jpg"
+                  }
                 }
               }
             }
@@ -910,18 +2047,33 @@
             "description": "Category updated.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/ProductCategoryDocument" }
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategoryDocument"
+                }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
           "404": {
             "description": "No product category exists with the given id.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
               }
             }
           },
@@ -929,63 +2081,119 @@
             "description": "Validation failed, or the slug is already taken by another category.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       },
       "delete": {
-        "tags": ["Admin Product Categories"],
+        "tags": [
+          "Admin Product Categories"
+        ],
         "summary": "Delete a product category",
         "description": "Permanently deletes a `product-categories` resource. Requires an `admin`-scoped token.",
         "operationId": "deleteProductCategory",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "parameters": [
-          { "name": "product_category", "in": "path", "required": true, "schema": { "type": "integer", "example": 1 }, "description": "The category's numeric primary key." }
+          {
+            "name": "product_category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The category's numeric primary key."
+          }
         ],
         "responses": {
           "200": {
             "description": "Category deleted.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/MetaMessageDocument" },
-                "example": { "meta": { "message": "Product category deleted successfully." } }
+                "schema": {
+                  "$ref": "#/components/schemas/MetaMessageDocument"
+                },
+                "example": {
+                  "meta": {
+                    "message": "Product category deleted successfully."
+                  }
+                }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
           "404": {
             "description": "No product category exists with the given id.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/admin/products": {
       "get": {
-        "tags": ["Admin Products"],
+        "tags": [
+          "Admin Products"
+        ],
         "summary": "List products",
         "description": "Returns a paginated collection of `products` resources. Requires an `admin`-scoped token.",
         "operationId": "listProducts",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "parameters": [
-          { "name": "page", "in": "query", "schema": { "type": "integer", "example": 1 }, "description": "Page number of results to return." }
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "Page number of results to return."
+          }
         ],
         "responses": {
           "200": {
             "description": "A page of products.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/ProductCollectionDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCollectionDocument"
+                },
                 "example": {
                   "data": [
                     {
@@ -994,19 +2202,28 @@
                       "attributes": {
                         "sku": "SKU-0001",
                         "slug": "phone-x",
-                        "title": { "en": "Phone X", "no": "Telefon X" },
-                        "description": { "en": "A great phone." },
-                        "is_active": true,
-                        "category_id": 1,
+                        "title": {
+                          "en": "Phone X",
+                          "no": "Telefon X"
+                        },
+                        "description": {
+                          "en": "A great phone."
+                        },
+                        "isActive": true,
+                        "categoryId": 1,
                         "price": 599.99,
-                        "stock_quantity": 25,
+                        "stockQuantity": 25,
                         "image": "https://example.com/phone-x.jpg",
-                        "meta_title": { "en": "Phone X | Example" },
-                        "meta_description": { "en": "Buy Phone X." },
-                        "meta_keywords": "phone, smartphone",
-                        "og_image": "https://example.com/phone-x-og.jpg",
-                        "created_at": "2026-08-31T09:00:00.000000Z",
-                        "updated_at": "2026-08-31T09:00:00.000000Z"
+                        "metaTitle": {
+                          "en": "Phone X | Example"
+                        },
+                        "metaDescription": {
+                          "en": "Buy Phone X."
+                        },
+                        "metaKeywords": "phone, smartphone",
+                        "ogImage": "https://example.com/phone-x-og.jpg",
+                        "createdAt": "2026-08-31T09:00:00.000000Z",
+                        "updatedAt": "2026-08-31T09:00:00.000000Z"
                       }
                     }
                   ]
@@ -1014,61 +2231,144 @@
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       },
       "post": {
-        "tags": ["Admin Products"],
+        "tags": [
+          "Admin Products"
+        ],
         "summary": "Create a product",
         "description": "Creates a `products` resource. Requires an `admin`-scoped token.",
         "operationId": "createProduct",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["sku", "slug", "title", "price", "stock_quantity"],
+                "required": [
+                  "sku",
+                  "slug",
+                  "title",
+                  "price",
+                  "stockQuantity"
+                ],
                 "properties": {
-                  "sku": { "type": "string", "maxLength": 255, "example": "SKU-0001", "description": "Required. At most 255 characters." },
-                  "slug": { "type": "string", "maxLength": 255, "example": "phone-x", "description": "Required. Must be unique among existing products, at most 255 characters." },
+                  "sku": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "SKU-0001",
+                    "description": "Required. At most 255 characters."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "phone-x",
+                    "description": "Required. Must be unique among existing products, at most 255 characters."
+                  },
                   "title": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "Phone X", "no": "Telefon X" },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "Phone X",
+                      "no": "Telefon X"
+                    },
                     "description": "Required. A non-empty object mapping locale code to title string."
                   },
                   "description": {
                     "type": "object",
                     "nullable": true,
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "A great phone." },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "A great phone."
+                    },
                     "description": "Optional. An object mapping locale code to description string. Omit to store no translations."
                   },
-                  "is_active": { "type": "boolean", "nullable": true, "example": true, "description": "Optional. Defaults to `true` when omitted." },
-                  "category_id": { "type": "integer", "nullable": true, "example": 1, "description": "Optional. Must reference an existing `product-categories` resource." },
-                  "price": { "type": "number", "format": "float", "minimum": 0, "example": 599.99, "description": "Required. Must not be negative." },
-                  "stock_quantity": { "type": "integer", "minimum": 0, "example": 25, "description": "Required. Must not be negative." },
-                  "image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x.jpg", "description": "Optional. URL or path to the product image." },
-                  "meta_title": {
+                  "isActive": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "example": true,
+                    "description": "Optional. Defaults to `true` when omitted."
+                  },
+                  "categoryId": {
+                    "type": "integer",
+                    "nullable": true,
+                    "example": 1,
+                    "description": "Optional. Must reference an existing `product-categories` resource."
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0,
+                    "example": 599.99,
+                    "description": "Required. Must not be negative."
+                  },
+                  "stockQuantity": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 25,
+                    "description": "Required. Must not be negative."
+                  },
+                  "image": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true,
+                    "example": "https://example.com/phone-x.jpg",
+                    "description": "Optional. URL or path to the product image."
+                  },
+                  "metaTitle": {
                     "type": "object",
                     "nullable": true,
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "Phone X | Example" },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "Phone X | Example"
+                    },
                     "description": "Optional. An object mapping locale code to meta title string. Omit to store no translations."
                   },
-                  "meta_description": {
+                  "metaDescription": {
                     "type": "object",
                     "nullable": true,
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "Buy Phone X." },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "Buy Phone X."
+                    },
                     "description": "Optional. An object mapping locale code to meta description string. Omit to store no translations."
                   },
-                  "meta_keywords": { "type": "string", "nullable": true, "example": "phone, smartphone", "description": "Optional. Comma-separated meta keywords." },
-                  "og_image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x-og.jpg", "description": "Optional. URL or path to the Open Graph share image." }
+                  "metaKeywords": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "phone, smartphone",
+                    "description": "Optional. Comma-separated meta keywords."
+                  },
+                  "ogImage": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true,
+                    "example": "https://example.com/phone-x-og.jpg",
+                    "description": "Optional. URL or path to the Open Graph share image."
+                  }
                 }
               }
             }
@@ -1079,7 +2379,9 @@
             "description": "Product created.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/ProductDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDocument"
+                },
                 "example": {
                   "data": {
                     "id": "1",
@@ -1087,60 +2389,101 @@
                     "attributes": {
                       "sku": "SKU-0001",
                       "slug": "phone-x",
-                      "title": { "en": "Phone X", "no": "Telefon X" },
-                      "description": { "en": "A great phone." },
-                      "is_active": true,
-                      "category_id": 1,
+                      "title": {
+                        "en": "Phone X",
+                        "no": "Telefon X"
+                      },
+                      "description": {
+                        "en": "A great phone."
+                      },
+                      "isActive": true,
+                      "categoryId": 1,
                       "price": 599.99,
-                      "stock_quantity": 25,
+                      "stockQuantity": 25,
                       "image": "https://example.com/phone-x.jpg",
-                      "meta_title": { "en": "Phone X | Example" },
-                      "meta_description": { "en": "Buy Phone X." },
-                      "meta_keywords": "phone, smartphone",
-                      "og_image": "https://example.com/phone-x-og.jpg",
-                      "created_at": "2026-08-31T09:00:00.000000Z",
-                      "updated_at": "2026-08-31T09:00:00.000000Z"
+                      "metaTitle": {
+                        "en": "Phone X | Example"
+                      },
+                      "metaDescription": {
+                        "en": "Buy Phone X."
+                      },
+                      "metaKeywords": "phone, smartphone",
+                      "ogImage": "https://example.com/phone-x-og.jpg",
+                      "createdAt": "2026-08-31T09:00:00.000000Z",
+                      "updatedAt": "2026-08-31T09:00:00.000000Z"
                     }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
           "422": {
-            "description": "Validation failed: a required field is missing or malformed, the slug is already taken, or `category_id` does not reference an existing category.",
+            "description": "Validation failed: a required field is missing or malformed, the slug is already taken, or `categoryId` does not reference an existing category.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
                 "example": {
                   "errors": [
-                    { "status": "422", "title": "Unprocessable Entity", "detail": "The slug has already been taken.", "source": { "pointer": "/data/attributes/slug" } }
+                    {
+                      "status": "422",
+                      "title": "Unprocessable Entity",
+                      "detail": "The slug has already been taken.",
+                      "source": {
+                        "pointer": "/data/attributes/slug"
+                      }
+                    }
                   ]
                 }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/admin/products/{product}": {
       "get": {
-        "tags": ["Admin Products"],
+        "tags": [
+          "Admin Products"
+        ],
         "summary": "Get a product",
         "description": "Returns a single `products` resource. Requires an `admin`-scoped token.",
         "operationId": "getProduct",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "parameters": [
-          { "name": "product", "in": "path", "required": true, "schema": { "type": "integer", "example": 1 }, "description": "The product's numeric primary key." }
+          {
+            "name": "product",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The product's numeric primary key."
+          }
         ],
         "responses": {
           "200": {
             "description": "The requested product.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/ProductDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDocument"
+                },
                 "example": {
                   "data": {
                     "id": "1",
@@ -1148,47 +2491,86 @@
                     "attributes": {
                       "sku": "SKU-0001",
                       "slug": "phone-x",
-                      "title": { "en": "Phone X", "no": "Telefon X" },
-                      "description": { "en": "A great phone." },
-                      "is_active": true,
-                      "category_id": 1,
+                      "title": {
+                        "en": "Phone X",
+                        "no": "Telefon X"
+                      },
+                      "description": {
+                        "en": "A great phone."
+                      },
+                      "isActive": true,
+                      "categoryId": 1,
                       "price": 599.99,
-                      "stock_quantity": 25,
+                      "stockQuantity": 25,
                       "image": "https://example.com/phone-x.jpg",
-                      "meta_title": { "en": "Phone X | Example" },
-                      "meta_description": { "en": "Buy Phone X." },
-                      "meta_keywords": "phone, smartphone",
-                      "og_image": "https://example.com/phone-x-og.jpg",
-                      "created_at": "2026-08-31T09:00:00.000000Z",
-                      "updated_at": "2026-08-31T09:00:00.000000Z"
+                      "metaTitle": {
+                        "en": "Phone X | Example"
+                      },
+                      "metaDescription": {
+                        "en": "Buy Phone X."
+                      },
+                      "metaKeywords": "phone, smartphone",
+                      "ogImage": "https://example.com/phone-x-og.jpg",
+                      "createdAt": "2026-08-31T09:00:00.000000Z",
+                      "updatedAt": "2026-08-31T09:00:00.000000Z"
                     }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
           "404": {
             "description": "No product exists with the given id.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       },
       "patch": {
-        "tags": ["Admin Products"],
+        "tags": [
+          "Admin Products"
+        ],
         "summary": "Update a product",
         "description": "Partially updates a `products` resource; all fields are optional. Setting a translatable field only replaces the locales present in the payload, leaving other stored locales untouched. Requires an `admin`-scoped token.",
         "operationId": "updateProduct",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "parameters": [
-          { "name": "product", "in": "path", "required": true, "schema": { "type": "integer", "example": 1 }, "description": "The product's numeric primary key." }
+          {
+            "name": "product",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The product's numeric primary key."
+          }
         ],
         "requestBody": {
           "required": false,
@@ -1197,39 +2579,95 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "sku": { "type": "string", "maxLength": 255, "example": "SKU-0002" },
-                  "slug": { "type": "string", "maxLength": 255, "example": "phone-x-v2", "description": "Must be unique among other products, at most 255 characters." },
+                  "sku": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "SKU-0002"
+                  },
+                  "slug": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "phone-x-v2",
+                    "description": "Must be unique among other products, at most 255 characters."
+                  },
                   "title": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" },
-                    "example": { "no": "Telefon X" },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "no": "Telefon X"
+                    },
                     "description": "A non-empty object mapping locale code to title string. Only the given locales are updated."
                   },
                   "description": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "An even better phone." },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "An even better phone."
+                    },
                     "description": "A non-empty object mapping locale code to description string. Only the given locales are updated."
                   },
-                  "is_active": { "type": "boolean", "example": false },
-                  "category_id": { "type": "integer", "nullable": true, "example": 2, "description": "Must reference an existing `product-categories` resource." },
-                  "price": { "type": "number", "format": "float", "minimum": 0, "example": 549.99 },
-                  "stock_quantity": { "type": "integer", "minimum": 0, "example": 10 },
-                  "image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x-v2.jpg" },
-                  "meta_title": {
+                  "isActive": {
+                    "type": "boolean",
+                    "example": false
+                  },
+                  "categoryId": {
+                    "type": "integer",
+                    "nullable": true,
+                    "example": 2,
+                    "description": "Must reference an existing `product-categories` resource."
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0,
+                    "example": 549.99
+                  },
+                  "stockQuantity": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 10
+                  },
+                  "image": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true,
+                    "example": "https://example.com/phone-x-v2.jpg"
+                  },
+                  "metaTitle": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "Phone X v2 | Example" },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "Phone X v2 | Example"
+                    },
                     "description": "A non-empty object mapping locale code to meta title string. Only the given locales are updated."
                   },
-                  "meta_description": {
+                  "metaDescription": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" },
-                    "example": { "en": "Buy the new Phone X." },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "en": "Buy the new Phone X."
+                    },
                     "description": "A non-empty object mapping locale code to meta description string. Only the given locales are updated."
                   },
-                  "meta_keywords": { "type": "string", "nullable": true, "example": "phone, smartphone, new" },
-                  "og_image": { "type": "string", "maxLength": 255, "nullable": true, "example": "https://example.com/phone-x-v2-og.jpg" }
+                  "metaKeywords": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "phone, smartphone, new"
+                  },
+                  "ogImage": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "nullable": true,
+                    "example": "https://example.com/phone-x-v2-og.jpg"
+                  }
                 }
               }
             }
@@ -1240,79 +2678,142 @@
             "description": "Product updated.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/ProductDocument" }
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDocument"
+                }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
           "404": {
             "description": "No product exists with the given id.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
               }
             }
           },
           "422": {
-            "description": "Validation failed: the slug is already taken by another product, or `category_id` does not reference an existing category.",
+            "description": "Validation failed: the slug is already taken by another product, or `categoryId` does not reference an existing category.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       },
       "delete": {
-        "tags": ["Admin Products"],
+        "tags": [
+          "Admin Products"
+        ],
         "summary": "Delete a product",
         "description": "Permanently deletes a `products` resource. Requires an `admin`-scoped token.",
         "operationId": "deleteProduct",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "parameters": [
-          { "name": "product", "in": "path", "required": true, "schema": { "type": "integer", "example": 1 }, "description": "The product's numeric primary key." }
+          {
+            "name": "product",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The product's numeric primary key."
+          }
         ],
         "responses": {
           "200": {
             "description": "Product deleted.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/MetaMessageDocument" },
-                "example": { "meta": { "message": "Product deleted successfully." } }
+                "schema": {
+                  "$ref": "#/components/schemas/MetaMessageDocument"
+                },
+                "example": {
+                  "meta": {
+                    "message": "Product deleted successfully."
+                  }
+                }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
           "404": {
             "description": "No product exists with the given id.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/JsonApiErrorDocument" },
-                "example": { "errors": [{ "status": "404", "title": "Not Found" }] }
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
               }
             }
           },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     },
     "/admin/me": {
       "get": {
-        "tags": ["Admin Auth"],
+        "tags": [
+          "Admin Auth"
+        ],
         "summary": "Get the authenticated admin's profile",
         "description": "Returns the `admins` resource for the account owning the bearer token. Requires an `admin`-scoped token; a `user` token is rejected with 403.",
         "operationId": "getCurrentAdmin",
-        "security": [{ "sanctumToken": [] }],
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "The authenticated admin's profile.",
             "content": {
               "application/vnd.api+json": {
-                "schema": { "$ref": "#/components/schemas/AdminDocument" },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDocument"
+                },
                 "example": {
                   "data": {
                     "id": "1",
@@ -1320,19 +2821,1129 @@
                     "attributes": {
                       "name": "Site Admin",
                       "email": "admin@example.com",
-                      "email_verified_at": "2026-07-01T09:00:00.000000Z",
-                      "is_active": true,
-                      "created_at": "2026-07-01T09:00:00.000000Z",
-                      "updated_at": "2026-07-01T09:00:00.000000Z"
+                      "emailVerifiedAt": "2026-07-01T09:00:00.000000Z",
+                      "isActive": true,
+                      "createdAt": "2026-07-01T09:00:00.000000Z",
+                      "updatedAt": "2026-07-01T09:00:00.000000Z"
                     }
                   }
                 }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Unauthenticated" },
-          "403": { "$ref": "#/components/responses/WrongGuard" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Browse the active catalog",
+        "description": "Returns a paginated collection of active `products` resources. Public endpoint, no authentication required.",
+        "operationId": "browseProducts",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "Page number of results to return."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of active products.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCollectionDocument"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "1",
+                      "type": "products",
+                      "attributes": {
+                        "sku": "SKU-0001",
+                        "slug": "phone-x",
+                        "title": {
+                          "en": "Phone X",
+                          "no": "Telefon X"
+                        },
+                        "description": {
+                          "en": "A great phone."
+                        },
+                        "isActive": true,
+                        "categoryId": 1,
+                        "price": 599.99,
+                        "stockQuantity": 25,
+                        "image": "https://example.com/phone-x.jpg",
+                        "metaTitle": {
+                          "en": "Phone X | Example"
+                        },
+                        "metaDescription": {
+                          "en": "Buy Phone X."
+                        },
+                        "metaKeywords": "phone, smartphone",
+                        "ogImage": "https://example.com/phone-x-og.jpg",
+                        "createdAt": "2026-08-31T09:00:00.000000Z",
+                        "updatedAt": "2026-08-31T09:00:00.000000Z"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/products/{product}": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Get an active product",
+        "description": "Returns a single active `products` resource. Public endpoint, no authentication required. Returns `404` for inactive products, matching the not-found response for a nonexistent id (an inactive product is not part of the public catalog).",
+        "operationId": "getPublicProduct",
+        "parameters": [
+          {
+            "name": "product",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The product's numeric primary key."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested product.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductDocument"
+                },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "products",
+                    "attributes": {
+                      "sku": "SKU-0001",
+                      "slug": "phone-x",
+                      "title": {
+                        "en": "Phone X",
+                        "no": "Telefon X"
+                      },
+                      "description": {
+                        "en": "A great phone."
+                      },
+                      "isActive": true,
+                      "categoryId": 1,
+                      "price": 599.99,
+                      "stockQuantity": 25,
+                      "image": "https://example.com/phone-x.jpg",
+                      "metaTitle": {
+                        "en": "Phone X | Example"
+                      },
+                      "metaDescription": {
+                        "en": "Buy Phone X."
+                      },
+                      "metaKeywords": "phone, smartphone",
+                      "ogImage": "https://example.com/phone-x-og.jpg",
+                      "createdAt": "2026-08-31T09:00:00.000000Z",
+                      "updatedAt": "2026-08-31T09:00:00.000000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No product exists with the given id, or it is not active.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/product-categories": {
+      "get": {
+        "tags": [
+          "Product Categories"
+        ],
+        "summary": "Browse categories",
+        "description": "Returns a paginated collection of `product-categories` resources. Public endpoint, no authentication required.",
+        "operationId": "browseProductCategories",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "Page number of results to return."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of product categories.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategoryCollectionDocument"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "1",
+                      "type": "product-categories",
+                      "attributes": {
+                        "slug": "phones",
+                        "title": "Phones",
+                        "description": {
+                          "en": "Smartphones and accessories."
+                        },
+                        "image": null,
+                        "metaTitle": {},
+                        "metaDescription": {},
+                        "metaKeywords": null,
+                        "ogImage": null,
+                        "createdAt": "2026-08-30T09:00:00.000000Z",
+                        "updatedAt": "2026-08-30T09:00:00.000000Z"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Create an order",
+        "description": "Creates an `orders` resource from a list of `{productId, quantity}` lines. Validates each `productId` exists and is active, then within a single database transaction locks the referenced products, verifies sufficient stock for every line, decrements stock immediately, and snapshots `sku`/`title`/`unitPrice` onto each `order-items` row. The order is created `pending` with `expiresAt` 30 minutes out, holding the stock reservation until checkout completes or the reaper reclaims it. Requires a `user`-scoped token.",
+        "operationId": "createOrder",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "productId",
+                        "quantity"
+                      ],
+                      "properties": {
+                        "productId": {
+                          "type": "integer",
+                          "example": 1,
+                          "description": "Must reference an existing, active product."
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "example": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "items": [
+                  {
+                    "productId": 1,
+                    "quantity": 2
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created; stock reserved.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDocument"
+                },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "orders",
+                    "attributes": {
+                      "userId": 1,
+                      "status": "pending",
+                      "currency": "nok",
+                      "subtotal": 119998,
+                      "total": 119998,
+                      "stripeCheckoutSessionId": null,
+                      "stripePaymentIntentId": null,
+                      "paidAt": null,
+                      "cancelledAt": null,
+                      "expiresAt": "2026-09-05T09:30:00.000000Z",
+                      "createdAt": "2026-09-05T09:00:00.000000Z",
+                      "updatedAt": "2026-09-05T09:05:00.000000Z",
+                      "items": [
+                        {
+                          "id": "1",
+                          "type": "order-items",
+                          "attributes": {
+                            "productId": 1,
+                            "sku": "SKU-0001",
+                            "title": "Phone X",
+                            "unitPrice": 59999,
+                            "quantity": 2,
+                            "lineTotal": 119998
+                          }
+                        }
+                      ],
+                      "payments": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "422": {
+            "description": "Validation failed (missing/invalid fields, a `productId` that does not exist or is inactive), or one or more lines requested more units than are in stock (`code: insufficient_stock`, `detail` lists the offending SKUs).",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "422",
+                      "title": "Unprocessable Entity",
+                      "detail": "Insufficient stock for: SKU-0001",
+                      "code": "insufficient_stock"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "List the caller's orders",
+        "description": "Returns a paginated collection of the authenticated user's own `orders` resources, newest first. Requires a `user`-scoped token.",
+        "operationId": "listOrders",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "Page number of results to return."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of the caller's orders.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderCollectionDocument"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "1",
+                      "type": "orders",
+                      "attributes": {
+                        "userId": 1,
+                        "status": "pending",
+                        "currency": "nok",
+                        "subtotal": 119998,
+                        "total": 119998,
+                        "stripeCheckoutSessionId": null,
+                        "stripePaymentIntentId": null,
+                        "paidAt": null,
+                        "cancelledAt": null,
+                        "expiresAt": "2026-09-05T09:30:00.000000Z",
+                        "createdAt": "2026-09-05T09:00:00.000000Z",
+                        "updatedAt": "2026-09-05T09:05:00.000000Z",
+                        "items": [
+                          {
+                            "id": "1",
+                            "type": "order-items",
+                            "attributes": {
+                              "productId": 1,
+                              "sku": "SKU-0001",
+                              "title": "Phone X",
+                              "unitPrice": 59999,
+                              "quantity": 2,
+                              "lineTotal": 119998
+                            }
+                          }
+                        ],
+                        "payments": []
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/orders/{order}": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get an order",
+        "description": "Returns a single `orders` resource, including its line items and any recorded payments. Only the order's owner may view it. Requires a `user`-scoped token.",
+        "operationId": "getOrder",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The order's numeric primary key."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested order.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDocument"
+                },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "orders",
+                    "attributes": {
+                      "userId": 1,
+                      "status": "pending",
+                      "currency": "nok",
+                      "subtotal": 119998,
+                      "total": 119998,
+                      "stripeCheckoutSessionId": null,
+                      "stripePaymentIntentId": null,
+                      "paidAt": null,
+                      "cancelledAt": null,
+                      "expiresAt": "2026-09-05T09:30:00.000000Z",
+                      "createdAt": "2026-09-05T09:00:00.000000Z",
+                      "updatedAt": "2026-09-05T09:05:00.000000Z",
+                      "items": [
+                        {
+                          "id": "1",
+                          "type": "order-items",
+                          "attributes": {
+                            "productId": 1,
+                            "sku": "SKU-0001",
+                            "title": "Phone X",
+                            "unitPrice": 59999,
+                            "quantity": 2,
+                            "lineTotal": 119998
+                          }
+                        }
+                      ],
+                      "payments": [
+                        {
+                          "id": "1",
+                          "type": "payments",
+                          "attributes": {
+                            "orderId": 1,
+                            "provider": "stripe",
+                            "stripeCheckoutSessionId": "cs_test_1234567890",
+                            "stripePaymentIntentId": "pi_1234567890",
+                            "status": "succeeded",
+                            "amount": 119998,
+                            "currency": "nok",
+                            "createdAt": "2026-09-05T09:05:00.000000Z",
+                            "updatedAt": "2026-09-05T09:05:00.000000Z"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "description": "The bearer token does not belong to the `user` guard, or belongs to a `user` other than the order's owner.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "403",
+                      "title": "Forbidden"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No order exists with the given id.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/orders/{order}/checkout": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Start Stripe Checkout for an order",
+        "description": "Creates a Stripe Checkout Session (`mode: payment`) for a `pending`, non-expired order \u2014 one Stripe line item per `order-items` row \u2014 and stores the session id on the order. Returns the hosted Checkout URL for the client to redirect the browser to. The webhook, not this response, is the source of truth for payment state. Only the order's owner may start checkout. Requires a `user`-scoped token.",
+        "operationId": "checkoutOrder",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The order's numeric primary key."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Checkout session created.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutSessionDocument"
+                },
+                "example": {
+                  "data": {
+                    "checkoutUrl": "https://checkout.stripe.com/c/pay/cs_test_1234567890"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "description": "The bearer token does not belong to the `user` guard, or belongs to a `user` other than the order's owner.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "403",
+                      "title": "Forbidden"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No order exists with the given id.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The order is not `pending`, or its stock hold (`expiresAt`) has already passed.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "409",
+                      "title": "Conflict",
+                      "detail": "Order is not open for checkout."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/webhooks/stripe": {
+      "post": {
+        "tags": [
+          "Stripe Webhooks"
+        ],
+        "summary": "Receive a Stripe webhook event",
+        "description": "Endpoint Stripe calls with account webhook events. Authenticated by the `Stripe-Signature` header (verified against `STRIPE_WEBHOOK_SECRET`), not Sanctum. The event id is recorded before any processing, and a unique-constraint conflict on it is treated as an already-handled Stripe retry (idempotent no-op, still `200`). Handles `checkout.session.completed` (mark order paid, record payment), `checkout.session.expired` (expire order, restock items), `payment_intent.payment_failed` (record a failed payment) and `charge.refunded` (mark payment and order refunded, no auto-restock). Any other event type is accepted and ignored, so Stripe adding new event types never causes a `400`.",
+        "operationId": "handleStripeWebhook",
+        "parameters": [
+          {
+            "name": "Stripe-Signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Stripe's webhook signature header, e.g. `t=1690000000,v1=...`."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "A raw Stripe Event object, verbatim as sent by Stripe."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event durably recorded (and processed, unless it was a replay or an unrecognized event type).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The `Stripe-Signature` header is missing, malformed, or does not match the payload for the configured webhook secret.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid signature."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/orders": {
+      "get": {
+        "tags": [
+          "Admin Orders"
+        ],
+        "summary": "List orders",
+        "description": "Returns a paginated collection of all `orders` resources, newest first, optionally filtered by `status` and/or `userId`. Requires an `admin`-scoped token.",
+        "operationId": "listAdminOrders",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "Page number of results to return."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/OrderStatus"
+            },
+            "description": "Filter to orders with this status."
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "Filter to orders belonging to this user."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of orders.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderCollectionDocument"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "1",
+                      "type": "orders",
+                      "attributes": {
+                        "userId": 1,
+                        "status": "pending",
+                        "currency": "nok",
+                        "subtotal": 119998,
+                        "total": 119998,
+                        "stripeCheckoutSessionId": null,
+                        "stripePaymentIntentId": null,
+                        "paidAt": null,
+                        "cancelledAt": null,
+                        "expiresAt": "2026-09-05T09:30:00.000000Z",
+                        "createdAt": "2026-09-05T09:00:00.000000Z",
+                        "updatedAt": "2026-09-05T09:05:00.000000Z",
+                        "items": [
+                          {
+                            "id": "1",
+                            "type": "order-items",
+                            "attributes": {
+                              "productId": 1,
+                              "sku": "SKU-0001",
+                              "title": "Phone X",
+                              "unitPrice": 59999,
+                              "quantity": 2,
+                              "lineTotal": 119998
+                            }
+                          }
+                        ],
+                        "payments": []
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/orders/{order}": {
+      "get": {
+        "tags": [
+          "Admin Orders"
+        ],
+        "summary": "Get an order",
+        "description": "Returns a single `orders` resource, including its line items and payments. Requires an `admin`-scoped token.",
+        "operationId": "getAdminOrder",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The order's numeric primary key."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested order.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDocument"
+                },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "orders",
+                    "attributes": {
+                      "userId": 1,
+                      "status": "paid",
+                      "currency": "nok",
+                      "subtotal": 119998,
+                      "total": 119998,
+                      "stripeCheckoutSessionId": "cs_test_1234567890",
+                      "stripePaymentIntentId": "pi_1234567890",
+                      "paidAt": "2026-09-05T09:05:00.000000Z",
+                      "cancelledAt": null,
+                      "expiresAt": "2026-09-05T09:30:00.000000Z",
+                      "createdAt": "2026-09-05T09:00:00.000000Z",
+                      "updatedAt": "2026-09-05T09:05:00.000000Z",
+                      "items": [
+                        {
+                          "id": "1",
+                          "type": "order-items",
+                          "attributes": {
+                            "productId": 1,
+                            "sku": "SKU-0001",
+                            "title": "Phone X",
+                            "unitPrice": 59999,
+                            "quantity": 2,
+                            "lineTotal": 119998
+                          }
+                        }
+                      ],
+                      "payments": [
+                        {
+                          "id": "1",
+                          "type": "payments",
+                          "attributes": {
+                            "orderId": 1,
+                            "provider": "stripe",
+                            "stripeCheckoutSessionId": "cs_test_1234567890",
+                            "stripePaymentIntentId": "pi_1234567890",
+                            "status": "succeeded",
+                            "amount": 119998,
+                            "currency": "nok",
+                            "createdAt": "2026-09-05T09:05:00.000000Z",
+                            "updatedAt": "2026-09-05T09:05:00.000000Z"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "404": {
+            "description": "No order exists with the given id.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin Orders"
+        ],
+        "summary": "Manually override an order's status",
+        "description": "Sets `status` directly, bypassing the normal webhook-driven state machine \u2014 for example, marking an order `refunded` after an out-of-band refund issued from the Stripe Dashboard. Setting `status` to `cancelled` also stamps `cancelledAt` if not already set. This action never restocks items; if goods are returned, adjust `stockQuantity` separately. Requires an `admin`-scoped token.",
+        "operationId": "updateAdminOrder",
+        "security": [
+          {
+            "sanctumToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            },
+            "description": "The order's numeric primary key."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "$ref": "#/components/schemas/OrderStatus"
+                  }
+                }
+              },
+              "example": {
+                "status": "refunded"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order updated.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDocument"
+                },
+                "example": {
+                  "data": {
+                    "id": "1",
+                    "type": "orders",
+                    "attributes": {
+                      "userId": 1,
+                      "status": "refunded",
+                      "currency": "nok",
+                      "subtotal": 119998,
+                      "total": 119998,
+                      "stripeCheckoutSessionId": "cs_test_1234567890",
+                      "stripePaymentIntentId": "pi_1234567890",
+                      "paidAt": "2026-09-05T09:05:00.000000Z",
+                      "cancelledAt": null,
+                      "expiresAt": "2026-09-05T09:30:00.000000Z",
+                      "createdAt": "2026-09-05T09:00:00.000000Z",
+                      "updatedAt": "2026-09-05T09:05:00.000000Z",
+                      "items": [
+                        {
+                          "id": "1",
+                          "type": "order-items",
+                          "attributes": {
+                            "productId": 1,
+                            "sku": "SKU-0001",
+                            "title": "Phone X",
+                            "unitPrice": 59999,
+                            "quantity": 2,
+                            "lineTotal": 119998
+                          }
+                        }
+                      ],
+                      "payments": [
+                        {
+                          "id": "1",
+                          "type": "payments",
+                          "attributes": {
+                            "orderId": 1,
+                            "provider": "stripe",
+                            "stripeCheckoutSessionId": "cs_test_1234567890",
+                            "stripePaymentIntentId": "pi_1234567890",
+                            "status": "succeeded",
+                            "amount": 119998,
+                            "currency": "nok",
+                            "createdAt": "2026-09-05T09:05:00.000000Z",
+                            "updatedAt": "2026-09-05T09:05:00.000000Z"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/WrongGuard"
+          },
+          "404": {
+            "description": "No order exists with the given id.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                },
+                "example": {
+                  "errors": [
+                    {
+                      "status": "404",
+                      "title": "Not Found"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`status` is missing or is not one of the recognized `OrderStatus` values.",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiErrorDocument"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
         }
       }
     }

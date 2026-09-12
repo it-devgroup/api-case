@@ -7,13 +7,23 @@ use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 class AdminResource extends JsonApiResource
 {
-    /**
-     * @var array<int, string>
-     */
-    public $attributes = ['name', 'email', 'email_verified_at', 'is_active', 'created_at', 'updated_at'];
-
     public function toType(Request $request): string
     {
         return 'admins';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toAttributes(Request $request): array
+    {
+        return [
+            'name' => $this->resource->name,
+            'email' => $this->resource->email,
+            'emailVerifiedAt' => $this->resource->email_verified_at,
+            'isActive' => $this->resource->is_active,
+            'createdAt' => $this->resource->created_at,
+            'updatedAt' => $this->resource->updated_at,
+        ];
     }
 }

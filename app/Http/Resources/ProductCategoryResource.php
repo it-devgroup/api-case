@@ -22,12 +22,12 @@ class ProductCategoryResource extends JsonApiResource
             'title' => $this->resource->title,
             'description' => $this->resource->getTranslations('description'),
             'image' => $this->resource->image,
-            'meta_title' => $this->resource->getTranslations('meta_title'),
-            'meta_description' => $this->resource->getTranslations('meta_description'),
-            'meta_keywords' => $this->resource->meta_keywords,
-            'og_image' => $this->resource->og_image,
-            'created_at' => $this->resource->created_at,
-            'updated_at' => $this->resource->updated_at,
+            'metaTitle' => $this->resource->getTranslations('meta_title'),
+            'metaDescription' => $this->resource->getTranslations('meta_description'),
+            'metaKeywords' => $this->resource->meta_keywords,
+            'ogImage' => $this->resource->og_image,
+            'createdAt' => $this->resource->created_at,
+            'updatedAt' => $this->resource->updated_at,
         ];
     }
 }

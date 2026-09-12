@@ -32,12 +32,12 @@ class UpdateProductCategoryRequest extends FormRequest
             'description' => ['sometimes', 'nullable', 'array'],
             'description.*' => ['nullable', 'string'],
             'image' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'meta_title' => ['sometimes', 'nullable', 'array'],
-            'meta_title.*' => ['nullable', 'string'],
-            'meta_description' => ['sometimes', 'nullable', 'array'],
-            'meta_description.*' => ['nullable', 'string'],
-            'meta_keywords' => ['sometimes', 'nullable', 'string'],
-            'og_image' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'metaTitle' => ['sometimes', 'nullable', 'array'],
+            'metaTitle.*' => ['nullable', 'string'],
+            'metaDescription' => ['sometimes', 'nullable', 'array'],
+            'metaDescription.*' => ['nullable', 'string'],
+            'metaKeywords' => ['sometimes', 'nullable', 'string'],
+            'ogImage' => ['sometimes', 'nullable', 'string', 'max:255'],
         ];
     }
 }

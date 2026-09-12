@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\Auth\LoginController;
 use App\Http\Controllers\Api\Admin\Auth\MeController;
+use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\Admin\ProductCategoryController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -22,4 +23,8 @@ Route::middleware(['auth:sanctum', 'auth.admin'])->group(function () {
     Route::get('admin/products/{product}', [ProductController::class, 'show']);
     Route::patch('admin/products/{product}', [ProductController::class, 'update']);
     Route::delete('admin/products/{product}', [ProductController::class, 'destroy']);
+
+    Route::get('admin/orders', [OrderController::class, 'index']);
+    Route::get('admin/orders/{order}', [OrderController::class, 'show']);
+    Route::patch('admin/orders/{order}', [OrderController::class, 'update']);
 });

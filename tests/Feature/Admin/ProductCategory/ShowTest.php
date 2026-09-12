@@ -33,10 +33,10 @@ class ShowTest extends TestCase
         $response->assertJsonPath('data.attributes.slug', 'phones');
         $response->assertJsonPath('data.attributes.description.en', 'Shop the latest phones.');
         $response->assertJsonPath('data.attributes.image', 'https://example.com/phones.jpg');
-        $response->assertJsonPath('data.attributes.meta_title.en', 'Phones | Example');
-        $response->assertJsonPath('data.attributes.meta_description.en', 'Browse our phone selection.');
-        $response->assertJsonPath('data.attributes.meta_keywords', 'phones, mobile, smartphones');
-        $response->assertJsonPath('data.attributes.og_image', 'https://example.com/phones-og.jpg');
+        $response->assertJsonPath('data.attributes.metaTitle.en', 'Phones | Example');
+        $response->assertJsonPath('data.attributes.metaDescription.en', 'Browse our phone selection.');
+        $response->assertJsonPath('data.attributes.metaKeywords', 'phones, mobile, smartphones');
+        $response->assertJsonPath('data.attributes.ogImage', 'https://example.com/phones-og.jpg');
     }
 
     public function test_returns_404_for_missing_product_category(): void

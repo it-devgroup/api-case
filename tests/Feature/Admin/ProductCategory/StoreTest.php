@@ -21,10 +21,10 @@ class StoreTest extends TestCase
                 'title' => 'Phones',
                 'description' => ['en' => 'Shop the latest phones.', 'no' => 'Kjøp de nyeste telefonene.'],
                 'image' => 'https://example.com/phones.jpg',
-                'meta_title' => ['en' => 'Phones | Example'],
-                'meta_description' => ['en' => 'Browse our phone selection.'],
-                'meta_keywords' => 'phones, mobile, smartphones',
-                'og_image' => 'https://example.com/phones-og.jpg',
+                'metaTitle' => ['en' => 'Phones | Example'],
+                'metaDescription' => ['en' => 'Browse our phone selection.'],
+                'metaKeywords' => 'phones, mobile, smartphones',
+                'ogImage' => 'https://example.com/phones-og.jpg',
             ]);
 
         $response->assertCreated();
@@ -34,10 +34,10 @@ class StoreTest extends TestCase
         $response->assertJsonPath('data.attributes.description.en', 'Shop the latest phones.');
         $response->assertJsonPath('data.attributes.description.no', 'Kjøp de nyeste telefonene.');
         $response->assertJsonPath('data.attributes.image', 'https://example.com/phones.jpg');
-        $response->assertJsonPath('data.attributes.meta_title.en', 'Phones | Example');
-        $response->assertJsonPath('data.attributes.meta_description.en', 'Browse our phone selection.');
-        $response->assertJsonPath('data.attributes.meta_keywords', 'phones, mobile, smartphones');
-        $response->assertJsonPath('data.attributes.og_image', 'https://example.com/phones-og.jpg');
+        $response->assertJsonPath('data.attributes.metaTitle.en', 'Phones | Example');
+        $response->assertJsonPath('data.attributes.metaDescription.en', 'Browse our phone selection.');
+        $response->assertJsonPath('data.attributes.metaKeywords', 'phones, mobile, smartphones');
+        $response->assertJsonPath('data.attributes.ogImage', 'https://example.com/phones-og.jpg');
 
         $this->assertDatabaseHas('product_categories', [
             'slug' => 'phones',
@@ -90,10 +90,10 @@ class StoreTest extends TestCase
         $response->assertCreated();
         $response->assertJsonPath('data.attributes.description', []);
         $response->assertJsonPath('data.attributes.image', null);
-        $response->assertJsonPath('data.attributes.meta_title', []);
-        $response->assertJsonPath('data.attributes.meta_description', []);
-        $response->assertJsonPath('data.attributes.meta_keywords', null);
-        $response->assertJsonPath('data.attributes.og_image', null);
+        $response->assertJsonPath('data.attributes.metaTitle', []);
+        $response->assertJsonPath('data.attributes.metaDescription', []);
+        $response->assertJsonPath('data.attributes.metaKeywords', null);
+        $response->assertJsonPath('data.attributes.ogImage', null);
 
         $this->assertDatabaseHas('product_categories', [
             'slug' => 'phones',

@@ -23,15 +23,15 @@ class StoreTest extends TestCase
                 'slug' => 'phone-x',
                 'title' => ['en' => 'Phone X', 'no' => 'Telefon X'],
                 'description' => ['en' => 'A great phone.'],
-                'is_active' => false,
-                'category_id' => $category->id,
+                'isActive' => false,
+                'categoryId' => $category->id,
                 'price' => 599.99,
-                'stock_quantity' => 25,
+                'stockQuantity' => 25,
                 'image' => 'https://example.com/phone-x.jpg',
-                'meta_title' => ['en' => 'Phone X | Example'],
-                'meta_description' => ['en' => 'Buy Phone X.'],
-                'meta_keywords' => 'phone, smartphone',
-                'og_image' => 'https://example.com/phone-x-og.jpg',
+                'metaTitle' => ['en' => 'Phone X | Example'],
+                'metaDescription' => ['en' => 'Buy Phone X.'],
+                'metaKeywords' => 'phone, smartphone',
+                'ogImage' => 'https://example.com/phone-x-og.jpg',
             ]);
 
         $response->assertCreated();
@@ -41,15 +41,15 @@ class StoreTest extends TestCase
         $response->assertJsonPath('data.attributes.title.en', 'Phone X');
         $response->assertJsonPath('data.attributes.title.no', 'Telefon X');
         $response->assertJsonPath('data.attributes.description.en', 'A great phone.');
-        $response->assertJsonPath('data.attributes.is_active', false);
-        $response->assertJsonPath('data.attributes.category_id', $category->id);
+        $response->assertJsonPath('data.attributes.isActive', false);
+        $response->assertJsonPath('data.attributes.categoryId', $category->id);
         $response->assertJsonPath('data.attributes.price', 599.99);
-        $response->assertJsonPath('data.attributes.stock_quantity', 25);
+        $response->assertJsonPath('data.attributes.stockQuantity', 25);
         $response->assertJsonPath('data.attributes.image', 'https://example.com/phone-x.jpg');
-        $response->assertJsonPath('data.attributes.meta_title.en', 'Phone X | Example');
-        $response->assertJsonPath('data.attributes.meta_description.en', 'Buy Phone X.');
-        $response->assertJsonPath('data.attributes.meta_keywords', 'phone, smartphone');
-        $response->assertJsonPath('data.attributes.og_image', 'https://example.com/phone-x-og.jpg');
+        $response->assertJsonPath('data.attributes.metaTitle.en', 'Phone X | Example');
+        $response->assertJsonPath('data.attributes.metaDescription.en', 'Buy Phone X.');
+        $response->assertJsonPath('data.attributes.metaKeywords', 'phone, smartphone');
+        $response->assertJsonPath('data.attributes.ogImage', 'https://example.com/phone-x-og.jpg');
 
         $this->assertDatabaseHas('products', [
             'sku' => 'SKU-0001',
@@ -74,18 +74,18 @@ class StoreTest extends TestCase
                 'slug' => 'phone-x',
                 'title' => ['en' => 'Phone X'],
                 'price' => 599.99,
-                'stock_quantity' => 25,
+                'stockQuantity' => 25,
             ]);
 
         $response->assertCreated();
-        $response->assertJsonPath('data.attributes.is_active', true);
-        $response->assertJsonPath('data.attributes.category_id', null);
+        $response->assertJsonPath('data.attributes.isActive', true);
+        $response->assertJsonPath('data.attributes.categoryId', null);
         $response->assertJsonPath('data.attributes.description', []);
         $response->assertJsonPath('data.attributes.image', null);
-        $response->assertJsonPath('data.attributes.meta_title', []);
-        $response->assertJsonPath('data.attributes.meta_description', []);
-        $response->assertJsonPath('data.attributes.meta_keywords', null);
-        $response->assertJsonPath('data.attributes.og_image', null);
+        $response->assertJsonPath('data.attributes.metaTitle', []);
+        $response->assertJsonPath('data.attributes.metaDescription', []);
+        $response->assertJsonPath('data.attributes.metaKeywords', null);
+        $response->assertJsonPath('data.attributes.ogImage', null);
 
         $this->assertDatabaseHas('products', [
             'sku' => 'SKU-0001',
@@ -106,7 +106,7 @@ class StoreTest extends TestCase
                 'slug' => 'phone-x',
                 'title' => ['en' => 'Phone X'],
                 'price' => 599.99,
-                'stock_quantity' => 25,
+                'stockQuantity' => 25,
             ]);
 
         $response->assertUnprocessable();
@@ -126,7 +126,7 @@ class StoreTest extends TestCase
             '/data/attributes/slug',
             '/data/attributes/title',
             '/data/attributes/price',
-            '/data/attributes/stock_quantity',
+            '/data/attributes/stockQuantity',
         ]);
     }
 
@@ -140,12 +140,12 @@ class StoreTest extends TestCase
                 'slug' => 'phone-x',
                 'title' => ['en' => 'Phone X'],
                 'price' => 599.99,
-                'stock_quantity' => 25,
-                'category_id' => 999999,
+                'stockQuantity' => 25,
+                'categoryId' => 999999,
             ]);
 
         $response->assertUnprocessable();
-        $this->assertJsonApiError($response, '422', '/data/attributes/category_id');
+        $this->assertJsonApiError($response, '422', '/data/attributes/categoryId');
     }
 
     public function test_translatable_field_values_must_be_strings(): void
@@ -158,7 +158,7 @@ class StoreTest extends TestCase
                 'slug' => 'phone-x',
                 'title' => ['en' => ['nested' => 'not a string']],
                 'price' => 599.99,
-                'stock_quantity' => 25,
+                'stockQuantity' => 25,
             ]);
 
         $response->assertUnprocessable();
@@ -172,7 +172,7 @@ class StoreTest extends TestCase
             'slug' => 'phone-x',
             'title' => ['en' => 'Phone X'],
             'price' => 599.99,
-            'stock_quantity' => 25,
+            'stockQuantity' => 25,
         ]);
 
         $response->assertUnauthorized();

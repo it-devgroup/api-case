@@ -12,6 +12,19 @@ use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller
 {
+    /**
+     * Maps camelCase request fields to the model's snake_case attributes.
+     */
+    private const ATTRIBUTE_MAP = [
+        'isActive' => 'is_active',
+        'categoryId' => 'category_id',
+        'stockQuantity' => 'stock_quantity',
+        'metaTitle' => 'meta_title',
+        'metaDescription' => 'meta_description',
+        'metaKeywords' => 'meta_keywords',
+        'ogImage' => 'og_image',
+    ];
+
     public function index(): JsonResponse
     {
         $products = Product::query()->paginate();
@@ -21,7 +34,7 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request): JsonResponse
     {
-        $product = Product::create($request->validated())->fresh();
+        $product = Product::create($this->mapAttributes($request->validated()))->fresh();
 
         return (new ProductResource($product))
             ->response()
@@ -35,7 +48,7 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, Product $product): JsonResponse
     {
-        $product->update($request->validated());
+        $product->update($this->mapAttributes($request->validated()));
 
         return (new ProductResource($product))->response();
     }
@@ -45,5 +58,20 @@ class ProductController extends Controller
         $product->delete();
 
         return JsonApi::meta(['message' => 'Product deleted successfully.']);
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function mapAttributes(array $validated): array
+    {
+        $attributes = [];
+
+        foreach ($validated as $key => $value) {
+            $attributes[self::ATTRIBUTE_MAP[$key] ?? $key] = $value;
+        }
+
+        return $attributes;
     }
 }

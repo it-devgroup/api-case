@@ -23,16 +23,16 @@ class UpdateTest extends TestCase
             ->patchJson("/api/admin/product-categories/{$productCategory->id}", [
                 'title' => 'Mobile Phones',
                 'image' => 'https://example.com/mobile-phones.jpg',
-                'meta_keywords' => 'mobile phones, smartphones',
-                'og_image' => 'https://example.com/mobile-phones-og.jpg',
+                'metaKeywords' => 'mobile phones, smartphones',
+                'ogImage' => 'https://example.com/mobile-phones-og.jpg',
             ]);
 
         $response->assertOk();
         $response->assertJsonPath('data.attributes.title', 'Mobile Phones');
         $response->assertJsonPath('data.attributes.slug', 'phones');
         $response->assertJsonPath('data.attributes.image', 'https://example.com/mobile-phones.jpg');
-        $response->assertJsonPath('data.attributes.meta_keywords', 'mobile phones, smartphones');
-        $response->assertJsonPath('data.attributes.og_image', 'https://example.com/mobile-phones-og.jpg');
+        $response->assertJsonPath('data.attributes.metaKeywords', 'mobile phones, smartphones');
+        $response->assertJsonPath('data.attributes.ogImage', 'https://example.com/mobile-phones-og.jpg');
 
         $this->assertDatabaseHas('product_categories', ['id' => $productCategory->id, 'title' => 'Mobile Phones']);
     }

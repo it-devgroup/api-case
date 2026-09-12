@@ -28,12 +28,12 @@ class StoreProductCategoryRequest extends FormRequest
             'description' => ['nullable', 'array'],
             'description.*' => ['nullable', 'string'],
             'image' => ['nullable', 'string', 'max:255'],
-            'meta_title' => ['nullable', 'array'],
-            'meta_title.*' => ['nullable', 'string'],
-            'meta_description' => ['nullable', 'array'],
-            'meta_description.*' => ['nullable', 'string'],
-            'meta_keywords' => ['nullable', 'string'],
-            'og_image' => ['nullable', 'string', 'max:255'],
+            'metaTitle' => ['nullable', 'array'],
+            'metaTitle.*' => ['nullable', 'string'],
+            'metaDescription' => ['nullable', 'array'],
+            'metaDescription.*' => ['nullable', 'string'],
+            'metaKeywords' => ['nullable', 'string'],
+            'ogImage' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

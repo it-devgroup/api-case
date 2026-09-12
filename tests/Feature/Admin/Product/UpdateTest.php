@@ -25,16 +25,16 @@ class UpdateTest extends TestCase
         $response = $this->withHeader('Authorization', "Bearer {$token}")
             ->patchJson("/api/admin/products/{$product->id}", [
                 'price' => 499.99,
-                'stock_quantity' => 10,
-                'is_active' => false,
-                'category_id' => $category->id,
+                'stockQuantity' => 10,
+                'isActive' => false,
+                'categoryId' => $category->id,
             ]);
 
         $response->assertOk();
         $response->assertJsonPath('data.attributes.price', 499.99);
-        $response->assertJsonPath('data.attributes.stock_quantity', 10);
-        $response->assertJsonPath('data.attributes.is_active', false);
-        $response->assertJsonPath('data.attributes.category_id', $category->id);
+        $response->assertJsonPath('data.attributes.stockQuantity', 10);
+        $response->assertJsonPath('data.attributes.isActive', false);
+        $response->assertJsonPath('data.attributes.categoryId', $category->id);
         $response->assertJsonPath('data.attributes.slug', 'phone-x');
 
         $this->assertDatabaseHas('products', [
@@ -98,11 +98,11 @@ class UpdateTest extends TestCase
 
         $response = $this->withHeader('Authorization', "Bearer {$token}")
             ->patchJson("/api/admin/products/{$product->id}", [
-                'category_id' => 999999,
+                'categoryId' => 999999,
             ]);
 
         $response->assertUnprocessable();
-        $this->assertJsonApiError($response, '422', '/data/attributes/category_id');
+        $this->assertJsonApiError($response, '422', '/data/attributes/categoryId');
     }
 
     public function test_update_requires_authentication(): void

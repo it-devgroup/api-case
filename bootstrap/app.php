@@ -4,10 +4,12 @@ use App\Http\Middleware\EnsureTokenOwnerIsAdmin;
 use App\Http\Middleware\EnsureTokenOwnerIsUser;
 use App\Support\JsonApi;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -28,6 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.user' => EnsureTokenOwnerIsUser::class,
         ]);
     })
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('orders:expire-stale')->everyFiveMinutes();
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
@@ -45,12 +50,16 @@ return Application::configure(basePath: dirname(__DIR__))
             $errors = [];
 
             foreach ($e->errors() as $field => $messages) {
+                $camelField = collect(explode('.', $field))
+                    ->map(fn ($segment) => is_numeric($segment) ? $segment : Str::camel($segment))
+                    ->implode('.');
+
                 foreach ($messages as $message) {
                     $errors[] = JsonApi::errorObject(
                         '422',
                         'Unprocessable Entity',
                         $message,
-                        "/data/attributes/{$field}",
+                        "/data/attributes/{$camelField}",
                     );
                 }
             }

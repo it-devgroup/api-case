@@ -20,7 +20,7 @@ class RegistrationTest extends TestCase
             'name' => 'Jane Doe',
             'email' => 'jane@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'passwordConfirmation' => 'password123',
         ]);
 
         $response->assertCreated();
@@ -61,7 +61,7 @@ class RegistrationTest extends TestCase
             'name' => 'Jane Doe',
             'email' => 'taken@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'passwordConfirmation' => 'password123',
         ]);
 
         $response->assertUnprocessable();
@@ -74,7 +74,7 @@ class RegistrationTest extends TestCase
             'name' => 'Jane Doe',
             'email' => 'jane@example.com',
             'password' => 'password123',
-            'password_confirmation' => 'does-not-match',
+            'passwordConfirmation' => 'does-not-match',
         ]);
 
         $response->assertUnprocessable();
