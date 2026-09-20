@@ -1,0 +1,1 @@
+* * * * * supervisorctl start laravel-schedule >> /var/www/html/storage/logs/scheduler.log 2>&1

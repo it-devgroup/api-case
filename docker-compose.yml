@@ -28,13 +28,12 @@ services:
     networks:
       - api-case
 
-  queue:
+  queue-worker:
     build:
       context: .
       dockerfile: docker/queue/Dockerfile
     volumes:
       - ./:/var/www/html
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
     restart: unless-stopped
     depends_on:
       database:
