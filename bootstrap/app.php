@@ -4,7 +4,6 @@ use App\Http\Middleware\EnsureTokenOwnerIsAdmin;
 use App\Http\Middleware\EnsureTokenOwnerIsUser;
 use App\Support\JsonApi;
 use Illuminate\Auth\AuthenticationException;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -29,9 +28,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.admin' => EnsureTokenOwnerIsAdmin::class,
             'auth.user' => EnsureTokenOwnerIsUser::class,
         ]);
-    })
-    ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('orders:expire-stale')->everyFiveMinutes();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
